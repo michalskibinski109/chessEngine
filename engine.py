@@ -36,16 +36,6 @@ Bishop_sq = [0, 0, 0, 0, 0, 0, 0, 0,
              0, 4, 1, 1, 1, 1, 4, 0,
              0, 0, 0, 0, 0, 0, 0, 0]
 
-Queen_sq = [0, 0, 0, 8, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 8, 0, 0, 0, 0]
-
-
 class ChessEngine:
     """Chess Engine class based on chess module
 
@@ -89,7 +79,23 @@ class ChessEngine:
             board = self.board
         if board.is_checkmate():
             return (-2*int(board.turn) + 1)*100 # 100 if black on move
-        return sum([PIECE_VALUES[str(i)]
+        eval = 0
+        fen = board.fen().split(' ')[0]
+        for i, row in enumerate(fen.split('/')):
+            j = 0
+            for item in row:
+                if item.isdigit():
+                    j += int(item)
+                else:
+                    if item == 'p':
+                        eval -= .05 * i
+                    elif item == 'P':
+                        eval += .05 * i
+                    elif item == 'n':
+                        eval -= .1*Knight_sq[i][j]
+                    elif item == 'N':
+                        eval += .1*Knight_sq[i][j]
+        return eval + sum([PIECE_VALUES[str(i)]
                         for i in board.piece_map().values()])
 
 
@@ -115,19 +121,17 @@ class ChessEngine:
             else:
                 moves[str(move)] = self.evaluate_pos(board)
                 board.pop()
+        if len(moves) == 0:
+            return (-2*curr_col +1)*100
         moves = (sorted(moves.items(), key=lambda item: item[1]))
+
         if depth == self.depth:
-            try:
-                return moves[-self.color][0]  # return move
-            except IndexError:
-                print('I LOSE :((')
-                return 
+            return moves[-self.color][0]  # return move
         else:
-            try:
-                return moves[-curr_col][1]  # return eval
-            except IndexError: # when check mate in variant
-                return (-2*curr_col +1)*100
-# c = ChessEngine(board)
-# print(c.make_move())
+            return moves[-curr_col][1]  # return eval
+            
+# c = ChessEngine()
+# c.evaluate_pos()
+#print(c.make_move())
 # print(board.turn)
 # c.push('g1h3')
