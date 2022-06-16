@@ -1,10 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
 import chess
 
-board = chess.Board()
-# color True - white False - black
 
 PIECE_VALUES = {
     'p': -1,
@@ -21,20 +18,49 @@ PIECE_VALUES = {
     'K': 0
 }
 
+Knight_sq = [0, 0, 0, 0, 0, 0, 0, 0,
+             0, 1, 1, 1, 1, 1, 1, 0,
+             0, 2, 3, 3, 3, 3, 2, 0,
+             1, 3, 4, 5, 5, 4, 3, 1,
+             1, 3, 4, 5, 5, 4, 3, 1,
+             0, 2, 3, 3, 3, 3, 2, 0,
+             0, 1, 1, 1, 1, 1, 1, 0,
+             0, 0, 0, 0, 0, 0, 0, 0]
+
+Bishop_sq = [0, 0, 0, 0, 0, 0, 0, 0,
+             0, 4, 1, 1, 1, 1, 4, 0,
+             0, 3, 2, 3, 3, 2, 3, 0,
+             1, 2, 4, 4, 4, 4, 2, 1,
+             1, 3, 4, 4, 4, 4, 3, 1,
+             0, 2, 2, 3, 3, 2, 2, 0,
+             0, 4, 1, 1, 1, 1, 4, 0,
+             0, 0, 0, 0, 0, 0, 0, 0]
+
+Queen_sq = [0, 0, 0, 8, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 8, 0, 0, 0, 0]
+
+
 class ChessEngine:
     """Chess Engine class based on chess module
-    
+
     Atributes:
         push(): push a move
         make_move(): returns best move
         evaluate_pos(): evaluate given position 
-        
+
     Todo:
         multiprocessing  
         optimalization
         improve evaluate position func
     """
-    def __init__(self, board = chess.Board(), depth=3) -> None:
+
+    def __init__(self, board=chess.Board(), depth=3) -> None:
         """
         Args:
             board: chess.Board() object
@@ -43,27 +69,28 @@ class ChessEngine:
         self.board = board
         self.depth = depth
         self.color = 0
-        
+
     def push(self, move):
         self.board.push_san(move)
-        
+
     def make_move(self):
         self.color = int(self.board.turn)
         move = self.__engine(self.board.copy(), self.depth)
-        return self.board.san(self.board.parse_uci((move))) # parse uci to san
+        return self.board.san(self.board.parse_uci((move)))  # parse uci to san
 
     def evaluate_pos(self, board=None):
         """
-        
         Note:
             counting material is based on the fen rep of position
+        Todo:
+            add points becouse of pieces position
         """
-        if board:  # for evaluate copy of board
-            return sum([PIECE_VALUES[str(i)]
+        if not board: 
+            board = self.board
+            
+        return sum([PIECE_VALUES[str(i)]
                         for i in board.piece_map().values()])
-        # for evalueate orginal board
-        return round(sum([PIECE_VALUES[str(i)]
-                          for i in self.board.piece_map().values()]), 2)
+
 
     def __engine(self, board: chess.Board(), depth):
         """
@@ -76,7 +103,7 @@ class ChessEngine:
         return:
             best move 
         """
-        curr_col = (self.color + self.depth - depth) % 2 
+        curr_col = (self.color + self.depth - depth) % 2
         # moves - dict {move(uci notation): eval}
         moves = {}
         for move in board.generate_legal_moves():
@@ -86,12 +113,12 @@ class ChessEngine:
                 board.pop()
             else:
                 moves[str(move)] = self.evaluate_pos(board)
-                board.pop()   
+                board.pop()
         moves = (sorted(moves.items(), key=lambda item: item[1]))
         if depth == self.depth:
-            return moves[-self.color][0] # return move
+            return moves[-self.color][0]  # return move
         else:
-            return moves[-curr_col][1] # return eval
+            return moves[-curr_col][1]  # return eval
 
 # c = ChessEngine(board)
 # print(c.make_move())
