@@ -68,7 +68,7 @@ class ChessEngine:
         """
         self.board = board
         self.depth = depth
-        self.color = 0
+        self.color = int(board.turn)
 
     def push(self, move):
         self.board.push_san(move)
@@ -87,7 +87,8 @@ class ChessEngine:
         """
         if not board: 
             board = self.board
-            
+        if board.is_checkmate():
+            return (-2*int(board.turn) + 1)*100 # 100 if black on move
         return sum([PIECE_VALUES[str(i)]
                         for i in board.piece_map().values()])
 
@@ -116,10 +117,16 @@ class ChessEngine:
                 board.pop()
         moves = (sorted(moves.items(), key=lambda item: item[1]))
         if depth == self.depth:
-            return moves[-self.color][0]  # return move
+            try:
+                return moves[-self.color][0]  # return move
+            except IndexError:
+                print('I LOSE :((')
+                return 
         else:
-            return moves[-curr_col][1]  # return eval
-
+            try:
+                return moves[-curr_col][1]  # return eval
+            except IndexError: # when check mate in variant
+                return (-2*curr_col +1)*100
 # c = ChessEngine(board)
 # print(c.make_move())
 # print(board.turn)

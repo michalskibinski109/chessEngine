@@ -5,7 +5,7 @@ from flask import Flask, request,render_template, jsonify
 
 app = Flask(__name__) 
 
-eng = ChessEngine()
+eng = ChessEngine(depth = 2)
 
 
 @app.route("/")
