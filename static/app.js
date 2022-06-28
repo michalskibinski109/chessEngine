@@ -39,7 +39,7 @@ function send() {
       function (data) {
         evaluate = data.eval;
         console.log(evaluate)
-        document.getElementById("eval").innerHTML = evaluate
+        document.getElementById("eval").innerHTML = evaluate.toFixed(1)
       }
     );
   });
@@ -81,5 +81,3 @@ function showTime() {
   document.getElementById("timeO").innerHTML = times[0].toFixed(1);
   document.getElementById("timeX").innerHTML = times[1].toFixed(1);
 }
-
-showTime();
