@@ -87,7 +87,7 @@ class ChessEngine:
                     return op[len(self.history)]  # next move from opening
             self.isPosInData = False
         self.color = int(self.board.turn)
-        move = self.__engine(self.board.copy(), self.depth)
+        move = self.__process_allocator(self.board.copy(), self.depth)
         try:
             # parse uci to san
             return self.board.san(self.board.parse_uci((move)))
@@ -107,30 +107,53 @@ class ChessEngine:
         if board.is_checkmate():
             return (-2*int(board.turn) + 1)*100  # 100 if black on move
         eval = 0
-        """it's taking to much time :(("""
-        fen = board.fen().split(' ')[0]
-        for i, row in enumerate(fen.split('/')):
-            j = 0
-            for item in row:
-                if item.isdigit():
-                    j += int(item)
-                else:
-                    if item == 'p':
-                        eval -= .02 * i
-                    elif item == 'P':
-                        eval += .02 * i
-                    elif item == 'n':
-                        eval -= .1*Knight_sq[i*8 + j]
-                    elif item == 'N':
-                        eval += .1*Knight_sq[i*8 + j]
-                    elif item == 'b':
-                        eval -= .1*Bishop_sq[i*8 + j]
-                    elif item == 'B':
-                        eval += .1*Bishop_sq[i*8 + j]
+        # """it's taking to much time :(("""
+        # fen = board.fen().split(' ')[0]
+        # for i, row in enumerate(fen.split('/')):
+        #     j = 0
+        #     for item in row:
+        #         if item.isdigit():
+        #             j += int(item)
+        #         else:
+        #             if item == 'p':
+        #                 eval -= .02 * i
+        #             elif item == 'P':
+        #                 eval += .02 * i
+        #             elif item == 'n':
+        #                 eval -= .1*Knight_sq[i*8 + j]
+        #             elif item == 'N':
+        #                 eval += .1*Knight_sq[i*8 + j]
+        #             elif item == 'b':
+        #                 eval -= .1*Bishop_sq[i*8 + j]
+        #             elif item == 'B':
+        #                 eval += .1*Bishop_sq[i*8 + j]
         return eval + sum([PIECE_VALUES[str(i)]
                            for i in board.piece_map().values()])
 
-    def __engine(self, board: chess.Board(), depth):
+    def __process_allocator(self, board: chess.Board(), depth):
+        l = len([move for move in board.generate_legal_moves()])
+        bar = Bar(str(f'finding move (depth = {self.depth})'), max=l+1)
+        bar.next()
+        moves = {}
+        manager = multiprocessing.Manager()
+        processes = []
+        eval = manager.dict()
+        for move in board.generate_legal_moves():
+            board2 = board.copy()
+            board2.push(move)
+            p = multiprocessing.Process(target=self.engine, args=(board2, depth - 1, eval, str(move)))
+            p.start()
+            bar.next()#display next
+            processes.append(p)
+        for proc in processes:
+            proc.join()
+        bar.finish()#end display 
+        if len(eval) == 0:
+            return (-2*(self.color % 2) + 1)*100
+        eval = (sorted(eval.items(), key=lambda item: item[1]))
+        return eval[-self.color][0]  # return move
+        
+    def engine(self, board: chess.Board(), depth, eval, m):
         """
         Private method designed to find best move
         Note:
@@ -139,34 +162,24 @@ class ChessEngine:
             color: 0 - black 1 - white
             board: COPY of current board 
         return:
-            best move 
+            eval of best move 
         """
-        if depth == self.depth: #init display
-            l = len([move for move in board.generate_legal_moves()])
-            bar = Bar('finding move (depth = ',self.depth,')', max=l+1)
-            bar.next()
         curr_col = (self.color + self.depth - depth) % 2
-        # moves - dict {move(uci notation): eval}
         moves = {}
         for move in board.generate_legal_moves():
             board.push(move)
             if depth > 0:
-                moves[str(move)] = self.__engine(board, depth - 1)
+                moves[str(move)] = self.engine(board, depth - 1,eval, m)
                 board.pop()
-                if depth == self.depth: #display progress
-                    bar.next()#display next
-                    
             else:
                 moves[str(move)] = self.evaluate_pos(board)
                 board.pop()
         if len(moves) == 0:
             return (-2*curr_col + 1)*100
         moves = (sorted(moves.items(), key=lambda item: item[1]))
-        if depth == self.depth:
-            bar.finish()#end display 
-            return moves[-self.color][0]  # return move
-        else:
-            return moves[-curr_col][1]  # return eval
+        if depth == self.depth - 1: # for multiprocessing 
+            eval[m] = moves[-curr_col][1]
+        return moves[-curr_col][1]  # return eval
 
 
 #c = ChessEngine()

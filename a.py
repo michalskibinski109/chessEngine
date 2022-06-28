@@ -1,8 +1,9 @@
 import multiprocessing
-
+from time import sleep
 
 def worker(procnum, return_dict):
     print(str(procnum) + " represent!")
+    sleep(2)
     return_dict[procnum] = procnum
 
 
