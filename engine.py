@@ -1,3 +1,4 @@
+from copy import copy
 import json
 import time
 import numpy as np
@@ -75,7 +76,8 @@ class ChessEngine:
         """
         self.board = board
         self.depth = depth
-        self.color = int(board.turn) # 1 white 0 - black
+        self.bestLine = []
+        self.bestEval = (-2*int(board.turn) + 1)*100
         self.history = []
         self.timeOnMove = []
         self.isPosInData = True  # false if pos not in openings
@@ -94,6 +96,7 @@ class ChessEngine:
         self.history.append((move))
         if '#' in move:
             plt.plot(self.timeOnMove)
+            plt.show()
 
     def make_move(self):
         if len(self.history) < 1:
@@ -105,7 +108,6 @@ class ChessEngine:
                     self.timeOnMove.append(.1)
                     return op[len(self.history)]  # next move from opening
             self.isPosInData = False
-        self.color = int(self.board.turn)
         move = self.__process_allocator(self.board.copy())
         try:
             # parse uci to san
@@ -118,13 +120,13 @@ class ChessEngine:
         """
         Note:
             counting material is based on the fen rep of position
-        Todo:
-            add points becouse of pieces position
+        TODO:
+            add motivation to fight for the center
         """
         if not board:
             board = self.board
         if board.is_checkmate():
-            return (-2*int(board.turn) + 1)*100  # 100 if black on move
+             return (-2*int(board.turn) + 1)*100  # 100 if black on move
         eval = 0
         #adding for number of legal moves
         eval += .01*(2*board.turn - 1)*len([i for i in board.generate_legal_moves()]) # - if black on move
@@ -158,6 +160,7 @@ class ChessEngine:
                     j+=1   
         return eval + sum([PIECE_VALUES[str(i)]
                            for i in board.piece_map().values()])
+        
 
     def __process_allocator(self, board: chess.Board()):
         """_summary_
@@ -170,7 +173,6 @@ class ChessEngine:
         Returns:
             _type_: _description_
         """
-        l = len([move for move in board.generate_legal_moves()])
         moves = []
         eval = []
         # bar = Bar(str(f'finding move (depth = {self.depth})'), max=l+1)
