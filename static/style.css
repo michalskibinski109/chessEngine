@@ -8,6 +8,23 @@
   font-family: Helvetica, sans-serif;
 }
 
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #312E2B; 
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: rgb(61, 113, 209); 
+  border-radius: 6px;
+}
+
+
 .main {
   width: 100vw;
   height: 100vh;
@@ -71,7 +88,7 @@ button:active {
 .timeO,
 .timeX {
   text-shadow: 5px 6px 4px #252525;
-  color: green;
+  color: red;
   line-height: 14vh;
   background-color: #312e2b;
   text-align: center;
@@ -79,8 +96,29 @@ button:active {
   cursor: pointer;
   transition: 0.1s;
 }
+.pgn {
+  font-family: monospace;
+  color: rgb(255, 255, 255);
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 500;
+  height: 40vh;
+  width: 90%;
+  overflow-wrap: anywhere;
+  /* background-color: #d4ddf081; */
+  margin: 2vh;
+  padding: 3px;
+  overflow-y: auto;
+  overflow-x:hidden;
+  text-align: justify;
+  transition: .1s ease;
+}
+.pgn:hover{
+  color: #3a3633;
+  background-color: white;
+}
 .timeX {
-  color: red;
+  color: green;
 }
 .timeO:hover,
 .timeX:hover {

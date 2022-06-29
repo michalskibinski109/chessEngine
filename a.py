@@ -1,21 +1,11 @@
-import multiprocessing
+from multiprocessing import Pool
 from time import sleep
 
-def worker(procnum, return_dict):
-    print(str(procnum) + " represent!")
-    sleep(2)
-    return_dict[procnum] = procnum
+def f(x, t = 2):
+    sleep(x - t)
+    print(t)
+    return str(x*x)
 
-
-if __name__ == "__main__":
-    manager = multiprocessing.Manager()
-    return_dict = manager.dict()
-    jobs = []
-    for i in range(5):
-        p = multiprocessing.Process(target=worker, args=(i, return_dict))
-        jobs.append(p)
-        p.start()
-
-    for proc in jobs:
-        proc.join()
-    print(return_dict.values())
+if __name__ == '__main__':
+    with Pool(5) as p:
+        print(p.map(f, [4, 5, 6]))
