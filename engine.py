@@ -26,24 +26,24 @@ PIECE_VALUES = {
 }
 
 KNIGHT_SQ = [0, 0, 0, 0, 0, 0, 0, 0,
-            0, 1, 1, 1, 1, 1, 1, 0,
-            0, 2, 3, 3, 3, 3, 2, 0,
-            1, 3, 4, 5, 5, 4, 3, 1,
-            1, 3, 4, 5, 5, 4, 3, 1,
-            0, 2, 3, 3, 3, 3, 2, 0,
-            0, 1, 1, 1, 1, 1, 1, 0,
-            0, 0, 0, 0, 0, 0, 0, 0]
+             0, 1, 1, 1, 1, 1, 1, 0,
+             0, 2, 3, 3, 3, 3, 2, 0,
+             1, 3, 4, 5, 5, 4, 3, 1,
+             1, 3, 4, 5, 5, 4, 3, 1,
+             0, 2, 3, 3, 3, 3, 2, 0,
+             0, 1, 1, 1, 1, 1, 1, 0,
+             0, 0, 0, 0, 0, 0, 0, 0]
 
 BISHOP_SQ = [0, 0, 0, 0, 0, 0, 0, 0,
-            0, 5, 1, 1, 1, 1, 5, 0,
-            0, 2, 2, 3, 3, 2, 2, 0,
-            1, 3, 4, 4, 4, 4, 3, 1,
-            1, 3, 4, 4, 4, 4, 3, 1,
-            0, 2, 2, 3, 3, 2, 2, 0,
-            0, 5, 1, 1, 1, 1, 5, 0,
-            0, 0, 0, 0, 0, 0, 0, 0]
+             0, 5, 1, 1, 1, 1, 5, 0,
+             0, 2, 2, 3, 3, 2, 2, 0,
+             1, 3, 4, 4, 4, 4, 3, 1,
+             1, 3, 4, 4, 4, 4, 3, 1,
+             0, 2, 2, 3, 3, 2, 2, 0,
+             0, 5, 1, 1, 1, 1, 5, 0,
+             0, 0, 0, 0, 0, 0, 0, 0]
 
-QUEEN_SQ = [0, 0, 0, 9, 0, 0, 0, 0,           
+QUEEN_SQ = [0, 0, 0, 9, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0,
@@ -52,11 +52,9 @@ QUEEN_SQ = [0, 0, 0, 9, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 9, 0, 0, 0, 0]
 
-    
-
 
 class ChessEngine:
-    
+
     """Chess Engine class based on chess module
 
     Atributes:
@@ -105,7 +103,7 @@ class ChessEngine:
             self.history.append((move))
         except:
             print(f'{move} is illegal')
- 
+
     def get_move_from_database(self):
         if self.isPosInData:
             if len(self.history) < 1:
@@ -128,7 +126,7 @@ class ChessEngine:
             print('invalid computer move: ', move)
             print(self.board)
 
-    def fig_placement_eval(self, board):
+    def pieces_placement_eval(self, board):
         eval = 0
         """it's taking to much time :(("""
         fen = board.fen().split(' ')[0]
@@ -139,21 +137,25 @@ class ChessEngine:
                     j += int(item)
                 else:
                     if item == 'p':
-                        eval -= .03 * (7 - i)
+                        eval -= 1+.03 * (7 - i)
                     elif item == 'P':
-                        eval += .03 * i
+                        eval += 1+.03 * i
                     elif item == 'n':
-                        eval -= .02*KNIGHT_SQ[i*8 + j]
+                        eval -= 3+.04*KNIGHT_SQ[i*8 + j]
                     elif item == 'N':
-                        eval += .02*KNIGHT_SQ[i*8 + j]
+                        eval += 3+.04*KNIGHT_SQ[i*8 + j]
                     elif item == 'b':
-                        eval -= .02*BISHOP_SQ[i*8 + j]
+                        eval -= 3+.04*BISHOP_SQ[i*8 + j]
                     elif item == 'B':
-                        eval += .02*BISHOP_SQ[i*8 + j]
+                        eval += 3+.04*BISHOP_SQ[i*8 + j]
+                    elif item == 'r':
+                        eval -= 5
+                    elif item == 'R':
+                        eval += 5
                     elif item == 'q':
-                        eval -= .05*QUEEN_SQ[i*8 + j]
+                        eval -= 9+.05*QUEEN_SQ[i*8 + j]
                     elif item == 'Q':
-                        eval += .05*QUEEN_SQ[i*8 + j]
+                        eval += 9+.05*QUEEN_SQ[i*8 + j]
                     j += 1
         return eval
 
@@ -177,9 +179,7 @@ class ChessEngine:
         if board.is_checkmate():
             return (-2*int(board.turn) + 1)*100  # 100 if black on move
         board.turn = (not board.turn)
-        eval = self.fig_placement_eval(board) + self.legal_moves_eval(board)
-        return eval + sum([PIECE_VALUES[str(i)]
-                           for i in board.piece_map().values()])
+        return self.pieces_placement_eval(board) + self.legal_moves_eval(board)
 
     def __process_allocator(self):
         """_summary_
@@ -240,9 +240,10 @@ class ChessEngine:
         moves = (sorted(moves.items(), key=lambda item: item[1]))
         return moves[-curr_col][1]  # return eval
 
+
 if __name__ == "__main__":
-    
-    c = ChessEngine(depth = 1)
+
+    c = ChessEngine(depth=1)
     while(True):
         print(c.evaluate_pos())
         move = input()
@@ -250,4 +251,3 @@ if __name__ == "__main__":
         computer = c.make_move()
         c.push(computer)
         print(c.board)
-
