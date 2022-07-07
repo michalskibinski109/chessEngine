@@ -4,10 +4,8 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 import chess
-from progress.bar import Bar
 import multiprocessing
 from multiprocessing import Pool
-
 
 
 THREADS = multiprocessing.cpu_count()
@@ -27,34 +25,38 @@ PIECE_VALUES = {
     'K': 0
 }
 
-Knight_sq = [0, 0, 0, 0, 0, 0, 0, 0,
-             0, 1, 1, 1, 1, 1, 1, 0,
-             0, 2, 3, 3, 3, 3, 2, 0,
-             1, 3, 4, 5, 5, 4, 3, 1,
-             1, 3, 4, 5, 5, 4, 3, 1,
-             0, 2, 3, 3, 3, 3, 2, 0,
-             0, 1, 1, 1, 1, 1, 1, 0,
-             0, 0, 0, 0, 0, 0, 0, 0]
+KNIGHT_SQ = [0, 0, 0, 0, 0, 0, 0, 0,
+            0, 1, 1, 1, 1, 1, 1, 0,
+            0, 2, 3, 3, 3, 3, 2, 0,
+            1, 3, 4, 5, 5, 4, 3, 1,
+            1, 3, 4, 5, 5, 4, 3, 1,
+            0, 2, 3, 3, 3, 3, 2, 0,
+            0, 1, 1, 1, 1, 1, 1, 0,
+            0, 0, 0, 0, 0, 0, 0, 0]
 
-Bishop_sq = [0, 0, 0, 0, 0, 0, 0, 0,
-             0, 5, 1, 1, 1, 1, 5, 0,
-             0, 2, 2, 3, 3, 2, 2, 0,
-             1, 3, 4, 4, 4, 4, 3, 1,
-             1, 3, 4, 4, 4, 4, 3, 1,
-             0, 2, 2, 3, 3, 2, 2, 0,
-             0, 5, 1, 1, 1, 1, 5, 0,
-             0, 0, 0, 0, 0, 0, 0, 0]
+BISHOP_SQ = [0, 0, 0, 0, 0, 0, 0, 0,
+            0, 5, 1, 1, 1, 1, 5, 0,
+            0, 2, 2, 3, 3, 2, 2, 0,
+            1, 3, 4, 4, 4, 4, 3, 1,
+            1, 3, 4, 4, 4, 4, 3, 1,
+            0, 2, 2, 3, 3, 2, 2, 0,
+            0, 5, 1, 1, 1, 1, 5, 0,
+            0, 0, 0, 0, 0, 0, 0, 0]
 
-Queen_sq = [0, 0, 0, 9, 0, 0, 0, 0,
-             0, 0, 0, 0, 0, 0, 0, 0,
-             0, 0, 0, 0, 0, 0, 0, 0,
-             0, 0, 0, 0, 0, 0, 0, 0,
-             0, 0, 0, 0, 0, 0, 0, 0,
-             0, 0, 0, 0, 0, 0, 0, 0,
-             0, 0, 0, 0, 0, 0, 0, 0,
-             0, 0, 0, 9, 0, 0, 0, 0]
+QUEEN_SQ = [0, 0, 0, 9, 0, 0, 0, 0,           
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 9, 0, 0, 0, 0]
+
+    
+
 
 class ChessEngine:
+    
     """Chess Engine class based on chess module
 
     Atributes:
@@ -63,21 +65,14 @@ class ChessEngine:
         evaluate_pos(): evaluate given position 
 
     Todo:
-        multiprocessing  
         optimalization
         improve evaluate position func
     """
 
-    def __init__(self, board=chess.Board(), depth=3) -> None:
-        """
-        Args:
-            board: chess.Board() object
-            depth: depth of engine. greater - better
-        """
+    def __init__(self, depth=3, board=chess.Board()) -> None:
+
         self.board = board
         self.depth = depth
-        self.bestLine = []
-        self.bestEval = (-2*int(board.turn) + 1)*100
         self.history = []
         self.timeOnMove = []
         self.isPosInData = True  # false if pos not in openings
@@ -85,54 +80,56 @@ class ChessEngine:
             self.openings = json.load(f)
         np.random.shuffle(self.openings)
 
+    @property
+    def depth(self):
+        return self.__depth
+
+    @depth.setter
+    def depth(self, depth):
+        if depth < 1:
+            depth = 1
+        self.__depth = min(depth, 4)
+
+    def reset(self):
+        self.history = []
+        self.timeOnMove = []
+        self.isPosInData = True
+        self.board.reset()
+
     def push(self, move):
+        if self.board.is_game_over():
+            print(f'game is over')
+            return -1
         try:
             self.board.push_san(move)
-        except ValueError:
-            print('was page reloaded ?')
-            self.history = []
-            self.board.reset()
-            self.board.push_san(move)
-        self.history.append((move))
-        if '#' in move:
-            plt.plot(self.timeOnMove)
-            plt.show()
-
-    def make_move(self):
-        if len(self.history) < 1:
-            return self.openings[np.random.choice(len(self.openings))][0]
-        if self.isPosInData:  # seraching in database
+            self.history.append((move))
+        except:
+            print(f'{move} is illegal')
+ 
+    def get_move_from_database(self):
+        if self.isPosInData:
+            if len(self.history) < 1:
+                return self.openings[np.random.choice(len(self.openings))][0]
             for op in self.openings:
                 if op[:len(self.history)] == self.history:
-                    print('still in prep. . . ')
                     self.timeOnMove.append(.1)
                     return op[len(self.history)]  # next move from opening
             self.isPosInData = False
-        move = self.__process_allocator(self.board.copy())
-        try:
-            # parse uci to san
-            return self.board.san(self.board.parse_uci((move)))
-        except ValueError:
-            print('move: ', move)
+        return -1
+
+    def make_move(self):
+        move = self.get_move_from_database()
+        if move != -1:
+            return move
+        move = self.__process_allocator()
+        if move in [str(m) for m in self.board.generate_legal_moves()]:
+            return move
+        else:
+            print('invalid computer move: ', move)
             print(self.board)
 
-    def evaluate_pos(self, board=None):
-        """
-        Note:
-            counting material is based on the fen rep of position
-        TODO:
-            add motivation to fight for the center
-        """
-        if not board:
-            board = self.board
-        if board.is_checkmate():
-             return (-2*int(board.turn) + 1)*100  # 100 if black on move
+    def fig_placement_eval(self, board):
         eval = 0
-        #adding for number of legal moves
-        eval += .01*(2*board.turn - 1)*len([i for i in board.generate_legal_moves()]) # - if black on move
-        board.turn = (not board.turn)
-        eval += .01*(2*board.turn - 1)*len([i for i in board.generate_legal_moves()]) # - if black on move
-        board.turn = (not board.turn)
         """it's taking to much time :(("""
         fen = board.fen().split(' ')[0]
         for i, row in enumerate(fen.split('/')):
@@ -146,30 +143,52 @@ class ChessEngine:
                     elif item == 'P':
                         eval += .03 * i
                     elif item == 'n':
-                        eval -= .02*Knight_sq[i*8 + j]
+                        eval -= .02*KNIGHT_SQ[i*8 + j]
                     elif item == 'N':
-                        eval += .02*Knight_sq[i*8 + j]
+                        eval += .02*KNIGHT_SQ[i*8 + j]
                     elif item == 'b':
-                        eval -= .02*Bishop_sq[i*8 + j]
+                        eval -= .02*BISHOP_SQ[i*8 + j]
                     elif item == 'B':
-                        eval += .02*Bishop_sq[i*8 + j]
+                        eval += .02*BISHOP_SQ[i*8 + j]
                     elif item == 'q':
-                        eval -= .05*Queen_sq[i*8 + j]
+                        eval -= .05*QUEEN_SQ[i*8 + j]
                     elif item == 'Q':
-                        eval += .05*Queen_sq[i*8 + j]
-                    j+=1   
+                        eval += .05*QUEEN_SQ[i*8 + j]
+                    j += 1
+        return eval
+
+    def legal_moves_eval(self, board):
+        eval = .01*(2*board.turn - 1) * \
+            len([i for i in board.generate_legal_moves()])
+        board.turn = (not board.turn)
+        eval += .01*(2*board.turn - 1) * \
+            len([i for i in board.generate_legal_moves()])
+        return eval
+
+    def evaluate_pos(self, board=None):
+        """
+        Note:
+            counting material is based on the fen rep of position
+        TODO:
+            add motivation to fight for the center
+        """
+        if not board:
+            board = self.board
+        if board.is_checkmate():
+            return (-2*int(board.turn) + 1)*100  # 100 if black on move
+        board.turn = (not board.turn)
+        eval = self.fig_placement_eval(board) + self.legal_moves_eval(board)
         return eval + sum([PIECE_VALUES[str(i)]
                            for i in board.piece_map().values()])
-        
 
-    def __process_allocator(self, board: chess.Board()):
+    def __process_allocator(self):
         """_summary_
         TODO check only moves that change evaluate a lot
         Args:
             board (chess.Board): _description_
             depth (int): _description_
 
-        
+
         Returns:
             _type_: _description_
         """
@@ -177,22 +196,23 @@ class ChessEngine:
         eval = []
         # bar = Bar(str(f'finding move (depth = {self.depth})'), max=l+1)
         # bar.next()
-        for move in board.generate_legal_moves():
+        for move in self.board.generate_legal_moves():
             moves.append(str(move))
-            board.push(move)
-            eval.append(board.copy())
-            board.pop()
+            self.board.push(move)
+            eval.append(self.board.copy())
+            self.board.pop()
         print(f'{len(moves)} moves to go, depth: {self.depth}')
         start = time.time()
         with Pool(THREADS) as p:
             eval = p.map(self.engine, eval)
         self.timeOnMove.append((time.time() - start))
-        print(f'done in {(time.time() - start):.1f} sec, avg: {((time.time() - start)/len(moves)+.00001):.2} per move')
+        print(
+            f'done in {(time.time() - start):.1f} sec, avg: {((time.time() - start)/len(moves)+.001):.2} per move')
         eval = dict(zip(moves, eval))
         eval = (sorted(eval.items(), key=lambda item: item[1]))
-        return eval[-board.turn][0]  # return move
-        
-    def engine(self, board: chess.Board(), depth = None):
+        return eval[-self.board.turn][0]  # return move
+
+    def engine(self, board: chess.Board(), depth=None):
         """
         Private method designed to find best move
         Note:
@@ -220,10 +240,14 @@ class ChessEngine:
         moves = (sorted(moves.items(), key=lambda item: item[1]))
         return moves[-curr_col][1]  # return eval
 
+if __name__ == "__main__":
+    
+    c = ChessEngine(depth = 1)
+    while(True):
+        print(c.evaluate_pos())
+        move = input()
+        c.push(move)
+        computer = c.make_move()
+        c.push(computer)
+        print(c.board)
 
-# c = ChessEngine()
-# print(c.evaluate_pos())
-# c.push('e2e4')
-# print(c.make_move())
-# print(board.turn)
-#
