@@ -30,9 +30,9 @@ class TestChessEngine:
         c = ChessEngine(1, Board())
         # white positionaly better(+1)
         plus_2_pos = Board(
-            'r1bq1bnr/pp1p1k1p/n1p1ppp1/8/2BPP3/1P3N2/PBPN1PPP/R2Q1RK1 w - - 2 9')
+            'rnbqkbnr/3pp3/8/8/3PP3/8/1B1NN1B1/R2Q1RK1 w kq - 0 1')
         minus_2_pos = Board(
-            'r1bq1rk1/ppp1ppbp/2n2np1/3p4/8/P5P1/1PPPPP1P/RNBQKBNR w KQ - 4 7')
+            'r2qk2r/1b1nn1b1/8/3pp3/8/8/3PP3/RNBQKBNR b KQkq - 0 1')
         # inbalance material
         plus_24_pos = Board(
             'rnb1k2B/pppp1p1p/6p1/4P3/8/8/PPP1PPPP/RN1QKBNR b KQq - 0 6')
@@ -41,10 +41,20 @@ class TestChessEngine:
         assert(c.pieces_placement_eval(plus_24_pos) > 20)
         del c
 
+    def test_evaluate_position(self):
+        c = ChessEngine(1, Board())
+        stealmate = Board(
+            '8/8/2k5/5K2/8/8/2N5/8 w - - 0 1')
+        white_wins = Board('8/8/k1K5/8/8/8/2N5/R7 b - - 0 1')
+
+        assert c.evaluate_pos(stealmate) == 0
+        assert c.evaluate_pos(white_wins) == 100
+        del c
+
     def test_engine_method(self):
         c = ChessEngine(1, Board())
         w_mate_in_1 = Board(
-            'rnbqkbnr/1pp2ppp/p2p4/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 0 4')
+            '8/8/8/8/8/5K2/1R6/5k2 w - - 0 1')
         b_mate_in_1 = Board('8/K1k5/1r6/8/8/8/8/8 w - - 0 1')
         b_mate_in_2 = Board('8/K7/2k5/8/8/1r6/8/8 w - - 0 1')
         w_mate_in_3 = Board('k7/8/8/1RK5/8/8/8/8 w - - 0 1')

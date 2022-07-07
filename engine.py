@@ -235,6 +235,8 @@ class ChessEngine:
             board = self.board
         if board.is_checkmate():
             return (-2*int(board.turn) + 1)*100  # 100 if black on move
+        elif board.is_insufficient_material() or board.is_stalemate():
+            return 0
         board.turn = (not board.turn)
         return self.pieces_placement_eval(board) + self.legal_moves_eval(board)
 
