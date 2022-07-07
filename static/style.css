@@ -105,7 +105,7 @@ button:active {
   height: 40vh;
   width: 90%;
   overflow-wrap: anywhere;
-  /* background-color: #d4ddf081; */
+  background-color: #254ca181; 
   margin: 2vh;
   padding: 3px;
   overflow-y: auto;
