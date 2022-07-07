@@ -18,6 +18,16 @@ class TestChessEngine:
             assert (type(database_move) == str)
         del c
 
+    def test_make_move(self):
+        c = ChessEngine(1, Board())
+        moves = ['a3', 'a6',  'b3', 'b6']
+        [c.push(m) for m in moves]
+        engine_moves = 2
+        for _ in range(engine_moves):
+            c.push(c.make_move())
+        assert len(c.history) == len(moves) + engine_moves
+        del c
+
     def test_push(self):
         c = ChessEngine(1, Board())
         moves = ['e4', 'e5',  'Bc4', 'a6', 'Qf3', 'b6',  'Qxf7#']

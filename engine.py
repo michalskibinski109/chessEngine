@@ -108,7 +108,7 @@ class ChessEngine:
             return move
         move = self.__process_allocator()
         if move in [str(m) for m in self.board.generate_legal_moves()]:
-            return move
+            return self.board.san(self.board.parse_uci((move)))
         else:
             print('invalid computer move: ', move)
             print(self.board)
@@ -237,7 +237,8 @@ class ChessEngine:
             return (-2*int(board.turn) + 1)*100  # 100 if black on move
         elif board.is_insufficient_material() or board.is_stalemate():
             return 0
-        return self.pieces_placement_eval(board) + self.legal_moves_eval(board)
+        return self.pieces_placement_eval(board)
+        #return self.pieces_placement_eval(board) + self.legal_moves_eval(board)
 
 
 if __name__ == "__main__":
@@ -247,5 +248,6 @@ if __name__ == "__main__":
         move = input()
         c.push(move)
         computer = c.make_move()
+        print(computer)
         c.push(computer)
         print(c.board)
