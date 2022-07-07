@@ -1,8 +1,6 @@
-from copy import copy
 import json
 import time
 import numpy as np
-import matplotlib.pyplot as plt
 import chess
 import multiprocessing
 from multiprocessing import Pool
@@ -104,17 +102,6 @@ class ChessEngine:
         except:
             print(f'{move} is illegal')
 
-    def get_move_from_database(self):
-        if self.isPosInData:
-            if len(self.history) < 1:
-                return self.openings[np.random.choice(len(self.openings))][0]
-            for op in self.openings:
-                if op[:len(self.history)] == self.history:
-                    self.timeOnMove.append(.1)
-                    return op[len(self.history)]  # next move from opening
-            self.isPosInData = False
-        return -1
-
     def make_move(self):
         move = self.get_move_from_database()
         if move != -1:
@@ -126,60 +113,16 @@ class ChessEngine:
             print('invalid computer move: ', move)
             print(self.board)
 
-    def pieces_placement_eval(self, board):
-        eval = 0
-        """it's taking to much time :(("""
-        fen = board.fen().split(' ')[0]
-        for i, row in enumerate(fen.split('/')):
-            j = 0
-            for item in row:
-                if item.isdigit():
-                    j += int(item)
-                else:
-                    if item == 'p':
-                        eval -= 1+.03 * (7 - i)
-                    elif item == 'P':
-                        eval += 1+.03 * i
-                    elif item == 'n':
-                        eval -= 3+.04*KNIGHT_SQ[i*8 + j]
-                    elif item == 'N':
-                        eval += 3+.04*KNIGHT_SQ[i*8 + j]
-                    elif item == 'b':
-                        eval -= 3+.04*BISHOP_SQ[i*8 + j]
-                    elif item == 'B':
-                        eval += 3+.04*BISHOP_SQ[i*8 + j]
-                    elif item == 'r':
-                        eval -= 5
-                    elif item == 'R':
-                        eval += 5
-                    elif item == 'q':
-                        eval -= 9+.05*QUEEN_SQ[i*8 + j]
-                    elif item == 'Q':
-                        eval += 9+.05*QUEEN_SQ[i*8 + j]
-                    j += 1
-        return eval
-
-    def legal_moves_eval(self, board):
-        eval = .01*(2*board.turn - 1) * \
-            len([i for i in board.generate_legal_moves()])
-        board.turn = (not board.turn)
-        eval += .01*(2*board.turn - 1) * \
-            len([i for i in board.generate_legal_moves()])
-        return eval
-
-    def evaluate_pos(self, board=None):
-        """
-        Note:
-            counting material is based on the fen rep of position
-        TODO:
-            add motivation to fight for the center
-        """
-        if not board:
-            board = self.board
-        if board.is_checkmate():
-            return (-2*int(board.turn) + 1)*100  # 100 if black on move
-        board.turn = (not board.turn)
-        return self.pieces_placement_eval(board) + self.legal_moves_eval(board)
+    def get_move_from_database(self):
+        if self.isPosInData:
+            if len(self.history) < 1:
+                return self.openings[np.random.choice(len(self.openings))][0]
+            for op in self.openings:
+                if op[:len(self.history)] == self.history:
+                    self.timeOnMove.append(.1)
+                    return op[len(self.history)]  # next move from opening
+            self.isPosInData = False
+        return -1
 
     def __process_allocator(self):
         """_summary_
@@ -240,9 +183,63 @@ class ChessEngine:
         moves = (sorted(moves.items(), key=lambda item: item[1]))
         return moves[-curr_col][1]  # return eval
 
+    def pieces_placement_eval(self, board):
+        eval = 0
+        """it's taking to much time :(("""
+        fen = board.fen().split(' ')[0]
+        for i, row in enumerate(fen.split('/')):
+            j = 0
+            for item in row:
+                if item.isdigit():
+                    j += int(item)
+                else:
+                    if item == 'p':
+                        eval -= 1+.03 * (7 - i)
+                    elif item == 'P':
+                        eval += 1+.03 * i
+                    elif item == 'n':
+                        eval -= 3+.04*KNIGHT_SQ[i*8 + j]
+                    elif item == 'N':
+                        eval += 3+.04*KNIGHT_SQ[i*8 + j]
+                    elif item == 'b':
+                        eval -= 3+.04*BISHOP_SQ[i*8 + j]
+                    elif item == 'B':
+                        eval += 3+.04*BISHOP_SQ[i*8 + j]
+                    elif item == 'r':
+                        eval -= 5
+                    elif item == 'R':
+                        eval += 5
+                    elif item == 'q':
+                        eval -= 9+.05*QUEEN_SQ[i*8 + j]
+                    elif item == 'Q':
+                        eval += 9+.05*QUEEN_SQ[i*8 + j]
+                    j += 1
+        return eval
+
+    def legal_moves_eval(self, board):
+        eval = .01*(2*board.turn - 1) * \
+            len([i for i in board.generate_legal_moves()])
+        board.turn = (not board.turn)
+        eval += .01*(2*board.turn - 1) * \
+            len([i for i in board.generate_legal_moves()])
+        return eval
+
+    def evaluate_pos(self, board=None):
+        """
+        Note:
+            counting material is based on the fen rep of position
+        TODO:
+            add motivation to fight for the center
+        """
+        if not board:
+            board = self.board
+        if board.is_checkmate():
+            return (-2*int(board.turn) + 1)*100  # 100 if black on move
+        board.turn = (not board.turn)
+        return self.pieces_placement_eval(board) + self.legal_moves_eval(board)
+
 
 if __name__ == "__main__":
-
     c = ChessEngine(depth=1)
     while(True):
         print(c.evaluate_pos())
