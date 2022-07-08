@@ -1,9 +1,9 @@
 import json
 import time
+from multiprocessing import Pool
 import numpy as np
 import chess
 import multiprocessing
-from multiprocessing import Pool
 import matplotlib.pyplot as plt
 
 THREADS = multiprocessing.cpu_count()
@@ -56,7 +56,7 @@ class ChessEngine:
     """Chess Engine class based on chess module
 
     Atributes:
-        push(): push a move
+        push_move(): push_move a move
         find_move(): returns best move
         evaluate_pos(): evaluate given position 
 
@@ -75,7 +75,7 @@ class ChessEngine:
         self.isPosInData = True
         if str(self.board.fen()) != 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1':
             self.isPosInData = False # false if pos not in openings
-        with open('WCC.json', 'r') as f:
+        with open('WCC.json', 'r',encoding="utf-8") as f:
             self.openings = json.load(f)
         np.random.shuffle(self.openings)
 
@@ -85,9 +85,7 @@ class ChessEngine:
 
     @depth.setter
     def depth(self, depth):
-        if depth < 1:
-            depth = 1
-        self.__depth = min(depth, 4)
+        self.__depth = min(max(1,depth), 4)
 
     def reset(self):
         self.history = []
@@ -96,7 +94,7 @@ class ChessEngine:
         self.board.reset()
 
     def plot_last_game(self):
-        with open('game.json', 'r') as f:
+        with open('game.json', 'r',encoding="utf-8") as f:
             data = json.load(f)
         evals = list(zip(*data['EVALUATIONS']))
         times = data['TIMES']
@@ -106,25 +104,25 @@ class ChessEngine:
         fig.suptitle('eval and time per move')
         axs[0].bar(x, y)
         axs[0].set_ylabel('evaluation')
-        axs[1].bar(list(range(len(times))), times)
+        axs[1].bar(x, times)
         axs[1].set_xlabel('move')
         axs[1].set_ylabel('time [sec]')
         plt.show()
 
     def save_to_file(self):
-        with open('game.json', 'w') as f:
+        with open('game.json', 'w', encoding="utf-8") as f:
             json.dump({'HISTORY': self.history,
                       'EVALUATIONS': self.evaluations,
                        'TIMES': self.timeOnMove}, f)
 
-    def push(self, move):
+    def push_move(self, move):
         try:
             self.board.push_san(move)
             self.history.append((move))
         except:
             print(f'{move} is illegal')
         if self.board.is_game_over() or self.board.is_repetition():
-            print(f'game is over')
+            print('game is over')
             self.save_to_file()
 
     def find_move(self):
@@ -208,7 +206,6 @@ class ChessEngine:
 
     def pieces_placement_eval(self, board: chess.Board()):
         eval = 0
-        """it's taking to much time :(("""
         fen = board.fen().split(' ')[0]
         for i, row in enumerate(fen.split('/')):
             j = 0
@@ -241,12 +238,12 @@ class ChessEngine:
         return eval
 
     def legal_moves_eval(self, board):
-        eval = .01*(2*board.turn - 1) * \
+        evaluation = .01*(2*board.turn - 1) * \
             len([i for i in board.generate_legal_moves()])
         board.turn = (not board.turn)
-        eval += .01*(2*board.turn - 1) * \
+        evaluation += .01*(2*board.turn - 1) * \
             len([i for i in board.generate_legal_moves()])
-        return eval
+        return evaluation
 
     def evaluate_pos(self, board=None):
         """
@@ -268,12 +265,12 @@ class ChessEngine:
 if __name__ == "__main__":
     plt.show()
     c = ChessEngine(depth=1, board = chess.Board('r1bqkb1r/2p2ppp/p1pp1n2/4p3/4P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 7'))
-    c.plot_last_game()
+    #c.plot_last_game()
     while(True):
         print(c.evaluate_pos())
-        # c.push(move)
+        # c.push_move(move)
         computer = c.find_move()
-        move = input()
+        m = input()
         print(computer)
-        c.push(computer)
+        c.push_move(computer)
         print(c.board)
