@@ -100,7 +100,7 @@ class ChessEngine:
         self.isPosInData = True
         self.board.reset()
 
-    def plot(self):
+    def plot_last_game(self):
         with open('game.json', 'r') as f:
             data = json.load(f)
         evals = list(zip(*data['EVALUATIONS']))
@@ -131,7 +131,6 @@ class ChessEngine:
         if self.board.is_game_over():
             print(f'game is over')
             self.save_to_file()
-            self.plot()
 
     def make_move(self):
         move = self.get_move_from_database()

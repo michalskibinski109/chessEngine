@@ -1,6 +1,7 @@
 # chessEngine
 * chess engine with simple api 
-* for now with depth 3 estimated time per move is 1 min
+* has loaded some GMs games and uses them throught opening stage 
+* for now with depth 3 estimated time per move is 30 sec
 * for depth = 2 strength is about 1200 ELO
 * for depth = 3 strength is about 1500 ELO
 * frontend side of app is temporary.

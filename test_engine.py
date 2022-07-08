@@ -33,7 +33,7 @@ class TestChessEngine:
         moves = ['e4', 'e5',  'Bc4', 'a6', 'Qf3', 'b6',  'Qxf7#']
         [c.push(m) for m in moves]
         assert moves == c.history
-        assert (c.push('a5') == -1)  # here game is over, so cant push
+        assert (c.push('a5') == None)  # here game is over, so cant push
         del c
 
     def test_pieces_placement_eval(self):
