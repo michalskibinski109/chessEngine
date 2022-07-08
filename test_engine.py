@@ -18,17 +18,17 @@ class TestChessEngine:
             assert (type(database_move) == str)
         del c
 
-    def test_make_move(self):
+    def test_find_move(self):
         c = ChessEngine(1, Board())
         moves = ['a3', 'a6',  'b3', 'b6']
         [c.push(m) for m in moves]
         engine_moves = 2
         for _ in range(engine_moves):
-            c.push(c.make_move())
+            c.push(c.find_move())
         assert len(c.history) == len(moves) + engine_moves
         should_castle = Board('r1bqkb1r/2p2ppp/p1pp1n2/4p3/4P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 7')
         c = ChessEngine(1,should_castle)
-        assert c.make_move() == 'O-O'
+        assert c.find_move() == 'O-O'
         del c
 
     def test_push(self):

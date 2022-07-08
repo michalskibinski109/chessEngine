@@ -57,7 +57,7 @@ class ChessEngine:
 
     Atributes:
         push(): push a move
-        make_move(): returns best move
+        find_move(): returns best move
         evaluate_pos(): evaluate given position 
 
     Todo:
@@ -127,7 +127,7 @@ class ChessEngine:
             print(f'game is over')
             self.save_to_file()
 
-    def make_move(self):
+    def find_move(self):
         move = self.get_move_from_database()
         if move != -1:
             return move
@@ -270,7 +270,7 @@ if __name__ == "__main__":
     while(True):
         print(c.evaluate_pos())
         # c.push(move)
-        computer = c.make_move()
+        computer = c.find_move()
         move = input()
         print(computer)
         c.push(computer)
