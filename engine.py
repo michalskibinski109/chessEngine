@@ -50,14 +50,7 @@ QUEEN_SQ = [0, 0, 0, 9, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 9, 0, 0, 0, 0]
 
-KING_SQ = [0, 0, 3, 0, 0, 0, 5, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 3, 0, 0, 0, 5, 0]
+
 class ChessEngine:
 
     """Chess Engine class based on chess module
@@ -79,7 +72,9 @@ class ChessEngine:
         self.history = []
         self.evaluations = []
         self.timeOnMove = []
-        self.isPosInData = True  # false if pos not in openings
+        self.isPosInData = True
+        if str(self.board.fen()) != 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1':
+            self.isPosInData = False # false if pos not in openings
         with open('WCC.json', 'r') as f:
             self.openings = json.load(f)
         np.random.shuffle(self.openings)
@@ -155,22 +150,16 @@ class ChessEngine:
         return -1
 
     def __process_allocator(self):
-        """_summary_
+        """
         TODO check only moves that change evaluate a lot
-        Args:
-            board (chess.Board): _description_
-            depth (int): _description_
-
-
-        Returns:
-            _type_: _description_
         """
         moves = []
         eval = []
-        # bar = Bar(str(f'finding move (depth = {self.depth})'), max=l+1)
-        # bar.next()
+        castling_index = []
         for move in self.board.generate_legal_moves():
             moves.append(str(move))
+            castling_index.append(
+                int(self.board.is_castling(move))*(2*self.board.turn - 1))
             self.board.push(move)
             eval.append(self.board.copy())
             self.board.pop()
@@ -181,6 +170,7 @@ class ChessEngine:
         self.timeOnMove.append((time.time() - start))
         print(
             f'done in {(time.time() - start):.1f} sec, avg: {((time.time() - start)/len(moves)+.001):.2} per move')
+        eval = [eval[e] + castling_index[e] for e in range(len(eval))]
         eval = dict(zip(moves, eval))
         eval = (sorted(eval.items(), key=lambda item: item[1]))
         self.evaluations.append(eval[-self.board.turn])
@@ -244,10 +234,7 @@ class ChessEngine:
                         eval -= 9+.05*QUEEN_SQ[i*8 + j]
                     elif item == 'Q':
                         eval += 9+.05*QUEEN_SQ[i*8 + j]
-                    elif item == 'K':
-                        eval -= .05*KING_SQ[i*8 + j]
-                    elif item == 'k':
-                        eval += .05*KING_SQ[i*8 + j]
+
                     j += 1
         return eval
 
@@ -278,13 +265,13 @@ class ChessEngine:
 
 if __name__ == "__main__":
     plt.show()
-    c = ChessEngine(depth=1)
-    c.plot()
+    c = ChessEngine(depth=1, board = chess.Board('r1bqkb1r/2p2ppp/p1pp1n2/4p3/4P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 7'))
+    #c.plot_last_game()
     while(True):
         print(c.evaluate_pos())
+        # c.push(move)
+        computer = c.make_move()
         move = input()
-        c.push(move)
-        #computer = c.make_move()
-        # print(computer)
-        # c.push(computer)
+        print(computer)
+        c.push(computer)
         print(c.board)

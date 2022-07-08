@@ -26,6 +26,9 @@ class TestChessEngine:
         for _ in range(engine_moves):
             c.push(c.make_move())
         assert len(c.history) == len(moves) + engine_moves
+        should_castle = Board('r1bqkb1r/2p2ppp/p1pp1n2/4p3/4P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 7')
+        c = ChessEngine(1,should_castle)
+        assert c.make_move() == 'O-O'
         del c
 
     def test_push(self):
