@@ -6,7 +6,7 @@
 * for depth = 3 strength is about 1500 ELO
 * frontend side of app is temporary.
 * test coverage of chess engine module is about 90 %
-*note* only important file is `engine.py`
+*only important file is `engine.py`*
 
 ### current GUI (played as black with 1500 ELO bot):
 ![image](https://user-images.githubusercontent.com/77834536/177963789-800034be-426f-4e56-aed1-9f1496b0eb2a.png)
