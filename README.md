@@ -7,5 +7,11 @@
 * frontend side of app is temporary.
 * test coverage of chess engine module is about 90 %
 
-# current gui:
-![image](https://user-images.githubusercontent.com/77834536/177793705-351252d4-c033-47b4-85d8-9746616f764a.png)
+*only important file is `engine.py`*
+
+### current GUI (played as black with 1500 ELO bot):
+![image](https://user-images.githubusercontent.com/77834536/177963789-800034be-426f-4e56-aed1-9f1496b0eb2a.png)
+
+### some statisctic of that game
+![image](https://user-images.githubusercontent.com/77834536/177963988-a6fc3667-7f69-40f2-9f68-a41068947abc.png)
+![image](https://user-images.githubusercontent.com/77834536/177964009-b009d7d1-038f-4c2c-922b-5acfb90b887b.png)

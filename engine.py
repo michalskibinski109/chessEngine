@@ -25,10 +25,10 @@ PIECE_VALUES = {
 
 KNIGHT_SQ = [0, 0, 0, 0, 0, 0, 0, 0,
              0, 1, 1, 3, 3, 1, 1, 0,
-             0, 2, 5, 3, 3, 5, 2, 0,
+             0, 4, 5, 3, 3, 5, 4, 0,
              1, 3, 4, 5, 5, 4, 3, 1,
              1, 3, 4, 5, 5, 4, 3, 1,
-             0, 2, 5, 3, 3, 5, 2, 0,
+             0, 4, 5, 3, 3, 5, 4, 0,
              0, 1, 1, 3, 3, 1, 1, 0,
              0, 0, 0, 0, 0, 0, 0, 0]
 
@@ -123,13 +123,15 @@ class ChessEngine:
             self.history.append((move))
         except:
             print(f'{move} is illegal')
-        if self.board.is_game_over():
+        if self.board.is_game_over() or self.board.is_repetition():
             print(f'game is over')
             self.save_to_file()
 
     def find_move(self):
         move = self.get_move_from_database()
         if move != -1:
+            self.evaluations.append([move, 0])
+            self.timeOnMove.append(.1)
             return move
         move = self.__process_allocator()
         if move in [str(m) for m in self.board.generate_legal_moves()]:
@@ -215,9 +217,9 @@ class ChessEngine:
                     j += int(item)
                 else:
                     if item == 'p':
-                        eval -= (1+.04 * (7 - i))
+                        eval -= 1+(.02 * i)
                     elif item == 'P':
-                        eval += 1+.04 * i
+                        eval += 1+.02 * (7 - i)
                     elif item == 'n':
                         eval -= 3+.04*KNIGHT_SQ[i*8 + j]
                     elif item == 'N':
@@ -266,7 +268,7 @@ class ChessEngine:
 if __name__ == "__main__":
     plt.show()
     c = ChessEngine(depth=1, board = chess.Board('r1bqkb1r/2p2ppp/p1pp1n2/4p3/4P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 7'))
-    #c.plot_last_game()
+    c.plot_last_game()
     while(True):
         print(c.evaluate_pos())
         # c.push(move)
