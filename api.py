@@ -5,7 +5,7 @@ from flask import Flask, request,render_template, jsonify
 
 app = Flask(__name__) 
 
-eng = ChessEngine(depth = 3)
+eng = ChessEngine(depth = 2)
 
 
 @app.route("/")
@@ -21,7 +21,7 @@ def human_move():
 
 @app.route("/AI")
 def ai_func():
-    move = eng.make_move()
+    move = eng.find_move()
     print(f'eng move: {move}')
     eng.push(move) 
     return jsonify(rand_m = move)
