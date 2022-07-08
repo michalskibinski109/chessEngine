@@ -4,7 +4,7 @@ import numpy as np
 import chess
 import multiprocessing
 from multiprocessing import Pool
-
+import matplotlib.pyplot as plt
 
 THREADS = multiprocessing.cpu_count()
 
@@ -24,12 +24,12 @@ PIECE_VALUES = {
 }
 
 KNIGHT_SQ = [0, 0, 0, 0, 0, 0, 0, 0,
-             0, 1, 1, 1, 1, 1, 1, 0,
-             0, 2, 3, 3, 3, 3, 2, 0,
+             0, 1, 1, 3, 3, 1, 1, 0,
+             0, 2, 5, 3, 3, 5, 2, 0,
              1, 3, 4, 5, 5, 4, 3, 1,
              1, 3, 4, 5, 5, 4, 3, 1,
-             0, 2, 3, 3, 3, 3, 2, 0,
-             0, 1, 1, 1, 1, 1, 1, 0,
+             0, 2, 5, 3, 3, 5, 2, 0,
+             0, 1, 1, 3, 3, 1, 1, 0,
              0, 0, 0, 0, 0, 0, 0, 0]
 
 BISHOP_SQ = [0, 0, 0, 0, 0, 0, 0, 0,
@@ -50,7 +50,14 @@ QUEEN_SQ = [0, 0, 0, 9, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 9, 0, 0, 0, 0]
 
-
+KING_SQ = [0, 0, 3, 0, 0, 0, 5, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 3, 0, 0, 0, 5, 0]
 class ChessEngine:
 
     """Chess Engine class based on chess module
@@ -70,6 +77,7 @@ class ChessEngine:
         self.board = board
         self.depth = depth
         self.history = []
+        self.evaluations = []
         self.timeOnMove = []
         self.isPosInData = True  # false if pos not in openings
         with open('WCC.json', 'r') as f:
@@ -92,15 +100,38 @@ class ChessEngine:
         self.isPosInData = True
         self.board.reset()
 
+    def plot(self):
+        with open('game.json', 'r') as f:
+            data = json.load(f)
+        evals = list(zip(*data['EVALUATIONS']))
+        times = data['TIMES']
+        y = [round(e, 2) if abs(e) < 5 else e*5//abs(e) for e in evals[-1]]
+        x = list(range(1, 1+len(y)))
+        fig, axs = plt.subplots(2)
+        fig.suptitle('eval and time per move')
+        axs[0].bar(x, y)
+        axs[0].set_ylabel('evaluation')
+        axs[1].bar(list(range(len(times))), times)
+        axs[1].set_xlabel('move')
+        axs[1].set_ylabel('time [sec]')
+        plt.show()
+
+    def save_to_file(self):
+        with open('game.json', 'w') as f:
+            json.dump({'HISTORY': self.history,
+                      'EVALUATIONS': self.evaluations,
+                       'TIMES': self.timeOnMove}, f)
+
     def push(self, move):
-        if self.board.is_game_over():
-            print(f'game is over')
-            return -1
         try:
             self.board.push_san(move)
             self.history.append((move))
         except:
             print(f'{move} is illegal')
+        if self.board.is_game_over():
+            print(f'game is over')
+            self.save_to_file()
+            self.plot()
 
     def make_move(self):
         move = self.get_move_from_database()
@@ -153,6 +184,7 @@ class ChessEngine:
             f'done in {(time.time() - start):.1f} sec, avg: {((time.time() - start)/len(moves)+.001):.2} per move')
         eval = dict(zip(moves, eval))
         eval = (sorted(eval.items(), key=lambda item: item[1]))
+        self.evaluations.append(eval[-self.board.turn])
         return eval[-self.board.turn][0]  # return move
 
     def engine(self, board: chess.Board(), depth=None):
@@ -183,7 +215,7 @@ class ChessEngine:
         moves = (sorted(moves.items(), key=lambda item: item[1]))
         return moves[-curr_col][1]  # return eval
 
-    def pieces_placement_eval(self, board):
+    def pieces_placement_eval(self, board: chess.Board()):
         eval = 0
         """it's taking to much time :(("""
         fen = board.fen().split(' ')[0]
@@ -194,9 +226,9 @@ class ChessEngine:
                     j += int(item)
                 else:
                     if item == 'p':
-                        eval -= 1+.03 * (7 - i)
+                        eval -= (1+.04 * (7 - i))
                     elif item == 'P':
-                        eval += 1+.03 * i
+                        eval += 1+.04 * i
                     elif item == 'n':
                         eval -= 3+.04*KNIGHT_SQ[i*8 + j]
                     elif item == 'N':
@@ -213,6 +245,10 @@ class ChessEngine:
                         eval -= 9+.05*QUEEN_SQ[i*8 + j]
                     elif item == 'Q':
                         eval += 9+.05*QUEEN_SQ[i*8 + j]
+                    elif item == 'K':
+                        eval -= .05*KING_SQ[i*8 + j]
+                    elif item == 'k':
+                        eval += .05*KING_SQ[i*8 + j]
                     j += 1
         return eval
 
@@ -235,19 +271,21 @@ class ChessEngine:
             board = self.board
         if board.is_checkmate():
             return (-2*int(board.turn) + 1)*100  # 100 if black on move
-        elif board.is_insufficient_material() or board.is_stalemate():
+        elif board.is_insufficient_material() or board.is_stalemate() or board.is_fivefold_repetition():
             return 0
         return self.pieces_placement_eval(board)
-        #return self.pieces_placement_eval(board) + self.legal_moves_eval(board)
+        # return self.pieces_placement_eval(board) + self.legal_moves_eval(board)
 
 
 if __name__ == "__main__":
+    plt.show()
     c = ChessEngine(depth=1)
+    c.plot()
     while(True):
         print(c.evaluate_pos())
         move = input()
         c.push(move)
-        computer = c.make_move()
-        print(computer)
-        c.push(computer)
+        #computer = c.make_move()
+        # print(computer)
+        # c.push(computer)
         print(c.board)

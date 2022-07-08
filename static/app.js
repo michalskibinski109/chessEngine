@@ -87,7 +87,7 @@ function onChange(oldPos, newPos) {
         "." +
         " ".repeat(4 - (Math.round(i / 2) + 1).toString().length) +
         temp[i] +
-        " ".repeat(11 - temp[i].length);
+        " ".repeat(7 - temp[i].length);
     } else {
       history += temp[i] + " <br/>";
     }
