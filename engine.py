@@ -8,48 +8,6 @@ import matplotlib.pyplot as plt
 
 THREADS = multiprocessing.cpu_count()
 
-PIECE_VALUES = {
-    'p': -1,
-    'P': 1,
-    'n': -3,
-    'N': 3,
-    'q': -9,
-    'Q': 9,
-    'r': -5,
-    'R': 5,
-    'b': -3,
-    'B': 3,
-    'k': 0,
-    'K': 0
-}
-
-KNIGHT_SQ = [0, 0, 0, 0, 0, 0, 0, 0,
-             0, 1, 1, 3, 3, 1, 1, 0,
-             0, 4, 5, 3, 3, 5, 4, 0,
-             1, 3, 4, 5, 5, 4, 3, 1,
-             1, 3, 4, 5, 5, 4, 3, 1,
-             0, 4, 5, 3, 3, 5, 4, 0,
-             0, 1, 1, 3, 3, 1, 1, 0,
-             0, 0, 0, 0, 0, 0, 0, 0]
-
-BISHOP_SQ = [0, 0, 0, 0, 0, 0, 0, 0,
-             0, 5, 1, 1, 1, 1, 5, 0,
-             0, 2, 2, 3, 3, 2, 2, 0,
-             1, 3, 4, 4, 4, 4, 3, 1,
-             1, 3, 4, 4, 4, 4, 3, 1,
-             0, 2, 2, 3, 3, 2, 2, 0,
-             0, 5, 1, 1, 1, 1, 5, 0,
-             0, 0, 0, 0, 0, 0, 0, 0]
-
-QUEEN_SQ = [0, 0, 0, 9, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 9, 0, 0, 0, 0]
-
 
 class ChessEngine:
 
@@ -71,11 +29,11 @@ class ChessEngine:
         self.depth = depth
         self.history = []
         self.evaluations = []
-        self.timeOnMove = []
-        self.isPosInData = True
+        self.time_on_move = []
+        self.is_pos_in_data = True
         if str(self.board.fen()) != 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1':
-            self.isPosInData = False # false if pos not in openings
-        with open('WCC.json', 'r',encoding="utf-8") as f:
+            self.is_pos_in_data = False  # false if pos not in openings
+        with open('WCC.json', 'r', encoding="utf-8") as f:
             self.openings = json.load(f)
         np.random.shuffle(self.openings)
 
@@ -85,16 +43,17 @@ class ChessEngine:
 
     @depth.setter
     def depth(self, depth):
-        self.__depth = min(max(1,depth), 4)
+        self.__depth = min(max(1, depth), 4)
 
     def reset(self):
         self.history = []
-        self.timeOnMove = []
-        self.isPosInData = True
+        self.time_on_move = []
+        self.is_pos_in_data = True
         self.board.reset()
 
-    def plot_last_game(self):
-        with open('game.json', 'r',encoding="utf-8") as f:
+    @staticmethod
+    def plot_last_game():
+        with open('game.json', 'r', encoding="utf-8") as f:
             data = json.load(f)
         evals = list(zip(*data['EVALUATIONS']))
         times = data['TIMES']
@@ -113,13 +72,13 @@ class ChessEngine:
         with open('game.json', 'w', encoding="utf-8") as f:
             json.dump({'HISTORY': self.history,
                       'EVALUATIONS': self.evaluations,
-                       'TIMES': self.timeOnMove}, f)
+                       'TIMES': self.time_on_move}, f)
 
     def push_move(self, move):
         try:
             self.board.push_san(move)
             self.history.append((move))
-        except:
+        except ValueError:
             print(f'{move} is illegal')
         if self.board.is_game_over() or self.board.is_repetition():
             print('game is over')
@@ -129,7 +88,7 @@ class ChessEngine:
         move = self.get_move_from_database()
         if move != -1:
             self.evaluations.append([move, 0])
-            self.timeOnMove.append(.1)
+            self.time_on_move.append(.1)
             return move
         move = self.__process_allocator()
         if move in [str(m) for m in self.board.generate_legal_moves()]:
@@ -139,14 +98,14 @@ class ChessEngine:
             print(self.board)
 
     def get_move_from_database(self):
-        if self.isPosInData:
+        if self.is_pos_in_data:
             if len(self.history) < 1:
                 return self.openings[np.random.choice(len(self.openings))][0]
             for op in self.openings:
                 if op[:len(self.history)] == self.history:
-                    self.timeOnMove.append(.1)
+                    self.time_on_move.append(.1)
                     return op[len(self.history)]  # next move from opening
-            self.isPosInData = False
+            self.is_pos_in_data = False
         return -1
 
     def __process_allocator(self):
@@ -167,7 +126,7 @@ class ChessEngine:
         start = time.time()
         with Pool(THREADS) as p:
             eval = p.map(self.engine, eval)
-        self.timeOnMove.append((time.time() - start))
+        self.time_on_move.append((time.time() - start))
         print(
             f'done in {(time.time() - start):.1f} sec, avg: {((time.time() - start)/len(moves)+.001):.2} per move')
         eval = [eval[e] + castling_index[e] for e in range(len(eval))]
@@ -204,73 +163,135 @@ class ChessEngine:
         moves = (sorted(moves.items(), key=lambda item: item[1]))
         return moves[-curr_col][1]  # return eval
 
-    def pieces_placement_eval(self, board: chess.Board()):
-        eval = 0
-        fen = board.fen().split(' ')[0]
-        for i, row in enumerate(fen.split('/')):
+    def evaluate_pos(self, board=None):
+        if not board: # so we can run this method for whatever position
+            board = self.board
+        eval_object = PosEvalObject(board)
+        return eval_object()
+
+
+class Points:
+    KNIGHT_SQ = [[0, 0, 0, 0, 0, 0, 0, 0],
+                 [0, 1, 1, 3, 3, 1, 1, 0],
+                 [0, 4, 5, 3, 3, 5, 4, 0],
+                 [1, 3, 4, 5, 5, 4, 3, 1],
+                 [1, 3, 4, 5, 5, 4, 3, 1],
+                 [0, 4, 5, 3, 3, 5, 4, 0],
+                 [0, 1, 1, 3, 3, 1, 1, 0],
+                 [0, 0, 0, 0, 0, 0, 0, 0]]
+
+    BISHOP_SQ = [[0, 0, 0, 0, 0, 0, 0, 0],
+                 [0, 5, 1, 1, 1, 1, 5, 0],
+                 [0, 2, 2, 3, 3, 2, 2, 0],
+                 [1, 3, 4, 4, 4, 4, 3, 1],
+                 [1, 3, 4, 4, 4, 4, 3, 1],
+                 [0, 2, 2, 3, 3, 2, 2, 0],
+                 [0, 5, 1, 1, 1, 1, 5, 0],
+                 [0, 0, 0, 0, 0, 0, 0, 0]]
+
+    QUEEN_SQ = [[0, 0, 0, 9, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 9, 0, 0, 0, 0]]
+
+    PAWN_SQ = [[0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 1, 0, 0, 0, 0, 1, 0],
+               [0, 0, 0, 3, 3, 0, 0, 0],
+               [0, 0, 0, 3, 3, 0, 0, 0],
+               [0, 1, 0, 0, 0, 0, 1, 0],
+               [0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 0]]
+
+    ROOK_SQ = [[0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 0]]
+
+    KING_SQ = [[0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 0]]
+    POINTS = {'n': -3, 'N': 3, 'b': -3, 'B': 3,
+              'r': -5, 'R': 5, 'q': -9, 'Q': 9, 'p': -1, 'P': 1, 'k': 0, 'K': 0}
+
+    ADD_POINTS = {'p': PAWN_SQ, 'P': PAWN_SQ, 'n': KNIGHT_SQ, 'N': KNIGHT_SQ, 'b': BISHOP_SQ, 'B': BISHOP_SQ,
+                  'r': ROOK_SQ, 'R': ROOK_SQ, 'q': QUEEN_SQ, 'Q': QUEEN_SQ, 'k': KING_SQ, 'K': KING_SQ, }
+
+
+class PosEvalObject(Points):
+    """
+        Note:
+            counting material is based on the fen rep of position
+        TODO:
+            add motivation to fight for the center
+    """
+
+    def __init__(self, board) -> None:
+        self.board = board
+        self.eval = 0
+        self.fen = self.board.fen().split(' ')[0].split('/')
+
+    def pieces_placement_eval(self):
+        for i, row in enumerate(self.fen):
             j = 0
             for item in row:
                 if item.isdigit():
                     j += int(item)
                 else:
+                    self.eval += (2 * item.isupper() - 1) * \
+                        self.POINTS[item] + .04 * \
+                        self.ADD_POINTS[item.upper()][j][i]
                     if item == 'p':
-                        eval -= 1+(.02 * i)
+                        self.eval -= 1+(.02 * i)
                     elif item == 'P':
-                        eval += 1+.02 * (7 - i)
-                    elif item == 'n':
-                        eval -= 3+.04*KNIGHT_SQ[i*8 + j]
-                    elif item == 'N':
-                        eval += 3+.04*KNIGHT_SQ[i*8 + j]
-                    elif item == 'b':
-                        eval -= 3+.04*BISHOP_SQ[i*8 + j]
-                    elif item == 'B':
-                        eval += 3+.04*BISHOP_SQ[i*8 + j]
-                    elif item == 'r':
-                        eval -= 5
-                    elif item == 'R':
-                        eval += 5
-                    elif item == 'q':
-                        eval -= 9+.05*QUEEN_SQ[i*8 + j]
-                    elif item == 'Q':
-                        eval += 9+.05*QUEEN_SQ[i*8 + j]
-
+                        self.eval += 1+.02 * (7 - i)
                     j += 1
-        return eval
 
-    def legal_moves_eval(self, board):
-        evaluation = .01*(2*board.turn - 1) * \
-            len([i for i in board.generate_legal_moves()])
-        board.turn = (not board.turn)
-        evaluation += .01*(2*board.turn - 1) * \
-            len([i for i in board.generate_legal_moves()])
-        return evaluation
+    def legal_moves_eval(self):
+        self.eval += .01*(2*self.board.turn - 1) * \
+            len([i for i in self.board.generate_legal_moves()])
+        self.board.turn = (not self.board.turn)
+        self.eval += .01*(2*self.board.turn - 1) * \
+            len([i for i in self.board.generate_legal_moves()])
 
-    def evaluate_pos(self, board=None):
-        """
-        Note:
-            counting material is based on the fen rep of position
-        TODO:
-            add motivation to fight for the center
-        """
-        if not board:
-            board = self.board
-        if board.is_checkmate():
-            return (-2*int(board.turn) + 1)*100  # 100 if black on move
-        elif board.is_insufficient_material() or board.is_stalemate() or board.is_fivefold_repetition():
-            return 0
-        return self.pieces_placement_eval(board)
-        # return self.pieces_placement_eval(board) + self.legal_moves_eval(board)
+    def is_over(self):
+        if self.board.is_checkmate():
+            self.eval = (-2*int(self.board.turn) + 1)*100
+            return True  # 100 if black on move
+        if self.board.is_insufficient_material() or self.board.is_stalemate() or self.board.is_fivefold_repetition():
+            return True
+        return False
+
+    def __call__(self):
+        if not self.is_over():
+             self.pieces_placement_eval()
+        return self.eval
 
 
 if __name__ == "__main__":
-    plt.show()
-    c = ChessEngine(depth=1, board = chess.Board('r1bqkb1r/2p2ppp/p1pp1n2/4p3/4P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 7'))
-    #c.plot_last_game()
+    c = ChessEngine(depth=1, board=chess.Board(
+        'r1bqkb1r/2p2ppp/p1pp1n2/4p3/4P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 7'))
+    # c.plot_last_game()
+    p = PosEvalObject(c.board)
+    print(p())
     while(True):
-        print(c.evaluate_pos())
+
         # c.push_move(move)
-        computer = c.find_move()
+        #computer = c.find_move()
         m = input()
-        print(computer)
-        c.push_move(computer)
+        # print(computer)
+        c.push_move(m)
         print(c.board)

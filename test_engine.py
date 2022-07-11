@@ -5,7 +5,7 @@ import pytest
 class TestChessEngine:
     
     @staticmethod
-    @pytest.fixture
+    @pytest.fixture(autouse=True)
     def c():
         return ChessEngine(1, Board())
     
@@ -14,14 +14,12 @@ class TestChessEngine:
         assert type(c.openings) == list
 
     @staticmethod
-    def test_get_move_from_database():
-        c = ChessEngine(1, Board())
+    def test_get_move_from_database(c):
         for _ in range(3):
             database_move = c.get_move_from_database()
             c.push_move(database_move)
             assert type(database_move) == str
-        del c
-
+            
     @staticmethod
     def test_find_move(c):
         moves = ['a3', 'a6',  'b3', 'b6']
@@ -47,12 +45,10 @@ class TestChessEngine:
 
     @staticmethod
     def test_pieces_placement_eval(c):
-        # white positionaly better(+1)
         plus_2_pos = Board(
             'rnbqkbnr/3pp3/8/8/3PP3/8/1B1NN1B1/R2Q1RK1 w kq - 0 1')
         minus_2_pos = Board(
             'r2qk2r/1b1nn1b1/8/3pp3/8/8/3PP3/RNBQKBNR b KQkq - 0 1')
-        # inbalance material
         plus_24_pos = Board(
             'rnb1k2B/pppp1p1p/6p1/4P3/8/8/PPP1PPPP/RN1QKBNR b KQq - 0 6')
         assert (c.pieces_placement_eval(plus_2_pos) > .2)
