@@ -1,4 +1,5 @@
 import json
+from re import S
 import time
 from multiprocessing import Pool
 import numpy as np
@@ -167,7 +168,18 @@ class ChessEngine:
         if not board: # so we can run this method for whatever position
             board = self.board
         eval_object = PosEvalObject(board)
-        return eval_object()
+        return eval_object() # using __call__ method
+
+class Plot:
+    def __init__(self, path) -> None:
+        self.path = path
+    @property
+    def depth(self):
+        return self.__depth
+
+    @depth.setter
+    def depth(self, depth):
+        self.__depth = min(max(1, depth), 4)
 
 
 class Points:
@@ -224,8 +236,8 @@ class Points:
                [0, 0, 0, 0, 0, 0, 0, 0],
                [0, 0, 0, 0, 0, 0, 0, 0],
                [0, 0, 0, 0, 0, 0, 0, 0]]
-    POINTS = {'n': -3, 'N': 3, 'b': -3, 'B': 3,
-              'r': -5, 'R': 5, 'q': -9, 'Q': 9, 'p': -1, 'P': 1, 'k': 0, 'K': 0}
+    POINTS = {'N': 3,'B': 3,
+              'R': 5, 'Q': 9, 'P': 1, 'K': 0}
 
     ADD_POINTS = {'p': PAWN_SQ, 'P': PAWN_SQ, 'n': KNIGHT_SQ, 'N': KNIGHT_SQ, 'b': BISHOP_SQ, 'B': BISHOP_SQ,
                   'r': ROOK_SQ, 'R': ROOK_SQ, 'q': QUEEN_SQ, 'Q': QUEEN_SQ, 'k': KING_SQ, 'K': KING_SQ, }
@@ -252,12 +264,12 @@ class PosEvalObject(Points):
                     j += int(item)
                 else:
                     self.eval += (2 * item.isupper() - 1) * \
-                        self.POINTS[item] + .04 * \
-                        self.ADD_POINTS[item.upper()][j][i]
+                        (self.POINTS[item.upper()] + .04 * \
+                        self.ADD_POINTS[item.upper()][j][i])
                     if item == 'p':
-                        self.eval -= 1+(.02 * i)
+                        self.eval -= (.02 * i)
                     elif item == 'P':
-                        self.eval += 1+.02 * (7 - i)
+                        self.eval +=.02 * (7 - i)
                     j += 1
 
     def legal_moves_eval(self):
@@ -277,21 +289,22 @@ class PosEvalObject(Points):
 
     def __call__(self):
         if not self.is_over():
-             self.pieces_placement_eval()
+            self.pieces_placement_eval()
         return self.eval
-
+    def __str__(self) -> str:
+        return str(self.eval)
 
 if __name__ == "__main__":
     c = ChessEngine(depth=1, board=chess.Board(
         'r1bqkb1r/2p2ppp/p1pp1n2/4p3/4P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 7'))
-    # c.plot_last_game()
-    p = PosEvalObject(c.board)
-    print(p())
-    while(True):
+    p = PosEvalObject(chess.Board())
+    p.pieces_placement_eval()
+    print(p)
+    # while(True):
 
-        # c.push_move(move)
-        #computer = c.find_move()
-        m = input()
-        # print(computer)
-        c.push_move(m)
-        print(c.board)
+    #     # c.push_move(move)
+    #     #computer = c.find_move()
+    #     m = input()
+    #     # print(computer)
+    #     c.push_move(m)
+    #     print(c.board)

@@ -44,25 +44,22 @@ class TestChessEngine:
         assert (c.push_move('a5') == None)
 
     @staticmethod
-    def test_pieces_placement_eval(c):
+    def test_evaluate_position(c):
+        stealmate = Board(
+            '8/8/2k5/5K2/8/8/2N5/8 w - - 0 1')
+        white_wins = Board('8/8/k1K5/8/8/8/2N5/R7 b - - 0 1')
         plus_2_pos = Board(
             'rnbqkbnr/3pp3/8/8/3PP3/8/1B1NN1B1/R2Q1RK1 w kq - 0 1')
         minus_2_pos = Board(
             'r2qk2r/1b1nn1b1/8/3pp3/8/8/3PP3/RNBQKBNR b KQkq - 0 1')
         plus_24_pos = Board(
             'rnb1k2B/pppp1p1p/6p1/4P3/8/8/PPP1PPPP/RN1QKBNR b KQq - 0 6')
-        assert (c.pieces_placement_eval(plus_2_pos) > .2)
-        assert (-.2 > c.pieces_placement_eval(minus_2_pos))
-        assert(c.pieces_placement_eval(plus_24_pos) > 20)
-
-    @staticmethod
-    def test_evaluate_position(c):
-        stealmate = Board(
-            '8/8/2k5/5K2/8/8/2N5/8 w - - 0 1')
-        white_wins = Board('8/8/k1K5/8/8/8/2N5/R7 b - - 0 1')
-
         assert c.evaluate_pos(stealmate) == 0
         assert c.evaluate_pos(white_wins) == 100
+        assert (c.evaluate_pos(plus_2_pos) > .2)
+        assert (-.2 > c.evaluate_pos(minus_2_pos))
+        assert(c.evaluate_pos(plus_24_pos) > 20)
+
 
     @staticmethod
     def test_engine_method(c):
