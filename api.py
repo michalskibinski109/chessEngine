@@ -1,6 +1,5 @@
-import numpy as np
-from engine import ChessEngine
 from flask import Flask, request,render_template, jsonify
+from engine import ChessEngine
 
 
 app = Flask(__name__) 

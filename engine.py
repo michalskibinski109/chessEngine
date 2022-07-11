@@ -1,12 +1,12 @@
 import json
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 import time
 import numpy as np
 import chess
-import multiprocessing
 import matplotlib.pyplot as plt
+import os
 
-THREADS = multiprocessing.cpu_count()
+THREADS = cpu_count()
 
 
 class ChessEngine:
@@ -50,23 +50,6 @@ class ChessEngine:
         self.time_on_move = []
         self.is_pos_in_data = True
         self.board.reset()
-
-    @staticmethod
-    def plot_last_game():
-        with open('game.json', 'r', encoding="utf-8") as f:
-            data = json.load(f)
-        evals = list(zip(*data['EVALUATIONS']))
-        times = data['TIMES']
-        y = [round(e, 2) if abs(e) < 5 else e*5//abs(e) for e in evals[-1]]
-        x = list(range(1, 1+len(y)))
-        fig, axs = plt.subplots(2)
-        fig.suptitle('eval and time per move')
-        axs[0].bar(x, y)
-        axs[0].set_ylabel('evaluation')
-        axs[1].bar(x, times)
-        axs[1].set_xlabel('move')
-        axs[1].set_ylabel('time [sec]')
-        plt.show()
 
     def save_to_file(self):
         with open('game.json', 'w', encoding="utf-8") as f:
@@ -123,11 +106,11 @@ class ChessEngine:
             ev = p.map(self.engine, ev)
         self.time_on_move.append((time.time() - start))
         print(
-            f'done in {(time.time() - start):.1f} sec, avg: {((time.time() - start)/len(moves)+.001):.2} per move')
+            f'done in {(time.time() - start):.1f} sec, avg: {((time.time() - start)/(len(moves)+.001)):.2} per move')
         ev = [ev[e] + castling_index[e] for e in range(len(ev))]
-        return self.get_best_eval(moves, ev) 
+        return self.get_best_eval(moves, ev)
 
-    def get_best_eval(self, moves, ev):       
+    def get_best_eval(self, moves, ev):
         ev = dict(zip(moves, ev))
         ev = (sorted(ev.items(), key=lambda item: item[1]))
         self.evaluations.append(ev[-self.board.turn])
@@ -164,21 +147,50 @@ class ChessEngine:
     def evaluate_pos(self, board=None):
         if not board:  # so we can run this method for whatever position
             board = self.board
-        eval_object = PosEvalObject(board)
+        eval_object = PosEvalObject(board.copy())
         return eval_object()  # using __call__ method
 
 
 class Plot:
-    def __init__(self, path) -> None:
+    def __init__(self, path='game.json', ev=[], times=[]):
         self.path = path
+        self.evals = ev
+        self.time_per_move = times
+        self.max_eval = 5
 
     @property
-    def depth(self):
-        return self.__depth
+    def path(self):
+        return self.__path
 
-    @depth.setter
-    def depth(self, depth):
-        self.__depth = min(max(1, depth), 4)
+    @path.setter
+    def path(self, path):
+        if os.path.exists(path):
+            self.__path = path
+        else:
+            print('path is broken')
+
+    def load_from_file(self):
+        with open(self.path, encoding="utf-8") as f:
+            data = json.load(f)
+        self.evals = list(zip(*data['EVALUATIONS']))
+        self.time_per_move = data['TIMES']
+        if len(self.evals) != len(self.time_per_move):
+            print('invalid plot data')
+
+    def __call__(self):
+        if len(self.evals < 1):
+            self.load_from_file()
+        y = [round(e, 2) if abs(e) < self.max_eval else e *
+             self.max_eval//abs(e) for e in self.evals[-1]]
+        x = list(range(1, 1+len(y)))
+        fig, axs = plt.subplots(2)
+        fig.suptitle('eval and time per move')
+        axs[0].bar(x, y)
+        axs[0].set_ylabel('evaluation')
+        axs[1].bar(x, self.time_per_move)
+        axs[1].set_xlabel('move')
+        axs[1].set_ylabel('time [sec]')
+        plt.show()
 
 
 class Points:
@@ -291,7 +303,7 @@ class PosEvalObject(Points):
             self.pieces_placement_eval()
         return self.eval
 
-    def __str__(self) -> str:
+    def __repr__(self):
         return str(self.eval)
 
 
