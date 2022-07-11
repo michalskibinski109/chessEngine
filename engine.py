@@ -178,7 +178,7 @@ class Plot:
             print('invalid plot data')
 
     def __call__(self):
-        if len(self.evals < 1):
+        if len(self.evals) < 1:
             self.load_from_file()
         y = [round(e, 2) if abs(e) < self.max_eval else e *
              self.max_eval//abs(e) for e in self.evals[-1]]
@@ -187,7 +187,7 @@ class Plot:
         fig.suptitle('eval and time per move')
         axs[0].bar(x, y)
         axs[0].set_ylabel('evaluation')
-        axs[1].bar(x, self.time_per_move)
+        axs[1].bar(list(range(1, 1+len(self.time_per_move))), self.time_per_move)
         axs[1].set_xlabel('move')
         axs[1].set_ylabel('time [sec]')
         plt.show()
@@ -310,9 +310,8 @@ class PosEvalObject(Points):
 if __name__ == "__main__":
     c = ChessEngine(depth=1, board=chess.Board(
         'r1bqkb1r/2p2ppp/p1pp1n2/4p3/4P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 7'))
-    p = PosEvalObject(chess.Board())
-    p.pieces_placement_eval()
-    print(p)
+    p = Plot()
+    p()
     # while(True):
 
     #     # c.push_move(move)

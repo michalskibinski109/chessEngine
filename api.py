@@ -23,6 +23,7 @@ def ai_func():
     move = eng.find_move()
     print(f'eng move: {move}')
     eng.push_move(move) 
+    print(eng.evaluations, eng.time_on_move)
     return jsonify(rand_m = move)
 
 
