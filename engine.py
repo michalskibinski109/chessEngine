@@ -1,7 +1,6 @@
 import json
-from re import S
-import time
 from multiprocessing import Pool
+import time
 import numpy as np
 import chess
 import multiprocessing
@@ -110,31 +109,29 @@ class ChessEngine:
         return -1
 
     def __process_allocator(self):
-        """
-        TODO check only moves that change evaluate a lot
-        """
-        moves = []
-        eval = []
-        castling_index = []
+        moves, ev, castling_index = [], [], []
         for move in self.board.generate_legal_moves():
             moves.append(str(move))
             castling_index.append(
                 int(self.board.is_castling(move))*(2*self.board.turn - 1))
             self.board.push(move)
-            eval.append(self.board.copy())
+            ev.append(self.board.copy())
             self.board.pop()
         print(f'{len(moves)} moves to go, depth: {self.depth}')
         start = time.time()
         with Pool(THREADS) as p:
-            eval = p.map(self.engine, eval)
+            ev = p.map(self.engine, ev)
         self.time_on_move.append((time.time() - start))
         print(
             f'done in {(time.time() - start):.1f} sec, avg: {((time.time() - start)/len(moves)+.001):.2} per move')
-        eval = [eval[e] + castling_index[e] for e in range(len(eval))]
-        eval = dict(zip(moves, eval))
-        eval = (sorted(eval.items(), key=lambda item: item[1]))
-        self.evaluations.append(eval[-self.board.turn])
-        return eval[-self.board.turn][0]  # return move
+        ev = [ev[e] + castling_index[e] for e in range(len(ev))]
+        return self.get_best_eval(moves, ev) 
+
+    def get_best_eval(self, moves, ev):       
+        ev = dict(zip(moves, ev))
+        ev = (sorted(ev.items(), key=lambda item: item[1]))
+        self.evaluations.append(ev[-self.board.turn])
+        return ev[-self.board.turn][0]
 
     def engine(self, board: chess.Board(), depth=None):
         """
@@ -165,14 +162,16 @@ class ChessEngine:
         return moves[-curr_col][1]  # return eval
 
     def evaluate_pos(self, board=None):
-        if not board: # so we can run this method for whatever position
+        if not board:  # so we can run this method for whatever position
             board = self.board
         eval_object = PosEvalObject(board)
-        return eval_object() # using __call__ method
+        return eval_object()  # using __call__ method
+
 
 class Plot:
     def __init__(self, path) -> None:
         self.path = path
+
     @property
     def depth(self):
         return self.__depth
@@ -236,7 +235,7 @@ class Points:
                [0, 0, 0, 0, 0, 0, 0, 0],
                [0, 0, 0, 0, 0, 0, 0, 0],
                [0, 0, 0, 0, 0, 0, 0, 0]]
-    POINTS = {'N': 3,'B': 3,
+    POINTS = {'N': 3, 'B': 3,
               'R': 5, 'Q': 9, 'P': 1, 'K': 0}
 
     ADD_POINTS = {'p': PAWN_SQ, 'P': PAWN_SQ, 'n': KNIGHT_SQ, 'N': KNIGHT_SQ, 'b': BISHOP_SQ, 'B': BISHOP_SQ,
@@ -264,12 +263,12 @@ class PosEvalObject(Points):
                     j += int(item)
                 else:
                     self.eval += (2 * item.isupper() - 1) * \
-                        (self.POINTS[item.upper()] + .04 * \
-                        self.ADD_POINTS[item.upper()][j][i])
+                        (self.POINTS[item.upper()] + .04 *
+                         self.ADD_POINTS[item.upper()][j][i])
                     if item == 'p':
                         self.eval -= (.02 * i)
                     elif item == 'P':
-                        self.eval +=.02 * (7 - i)
+                        self.eval += .02 * (7 - i)
                     j += 1
 
     def legal_moves_eval(self):
@@ -291,8 +290,10 @@ class PosEvalObject(Points):
         if not self.is_over():
             self.pieces_placement_eval()
         return self.eval
+
     def __str__(self) -> str:
         return str(self.eval)
+
 
 if __name__ == "__main__":
     c = ChessEngine(depth=1, board=chess.Board(
