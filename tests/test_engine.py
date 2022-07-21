@@ -1,5 +1,5 @@
-import sys
-sys.path.append('')
+import sys 
+sys.path.append('') # fixing import problem [temporary solution] 
 
 from chess import Board
 from src.engine import ChessEngine, PushingInvalidMoveException
