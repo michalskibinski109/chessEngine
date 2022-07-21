@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
 from chess import Board
 from src.engine import ChessEngine
 import pytest
