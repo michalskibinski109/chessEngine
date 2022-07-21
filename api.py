@@ -1,5 +1,5 @@
 from flask import Flask, request,render_template, jsonify
-from engine import ChessEngine
+from src.engine import ChessEngine
 
 
 app = Flask(__name__) 
@@ -23,7 +23,6 @@ def ai_func():
     move = eng.find_move()
     print(f'eng move: {move}')
     eng.push_move(move) 
-    print(eng.evaluations, eng.time_on_move)
     return jsonify(rand_m = move)
 
 

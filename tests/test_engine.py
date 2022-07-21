@@ -1,5 +1,5 @@
 from chess import Board
-from engine import ChessEngine
+from src.engine import ChessEngine
 import pytest
 
 class TestChessEngine:
