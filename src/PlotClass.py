@@ -2,6 +2,8 @@ import json
 import matplotlib.pyplot as plt
 import os
 
+class PathNotExistException(Exception):
+    pass
 
 class Plot:
     def __init__(self, path='game.json', ev=[], times=[]):
@@ -19,7 +21,7 @@ class Plot:
         if os.path.exists(path):
             self.__path = path
         else:
-            print('path is broken')
+            raise PathNotExistException
 
     def load_from_file(self):
         with open(self.path, encoding="utf-8") as f:
