@@ -2,7 +2,7 @@ import sys
 sys.path.append('')
 
 from chess import Board
-from src.engine import ChessEngine
+from src.engine import ChessEngine, PushingInvalidMoveException
 import pytest
 
 class TestChessEngine:
@@ -44,7 +44,9 @@ class TestChessEngine:
             c.push_move(m)
         assert moves == c.history
         # here game is over, so cant push_move
-        assert (c.push_move('a5') == None)
+        with pytest.raises(PushingInvalidMoveException) as exc:
+            c.push_move('a5')
+        assert exc
 
     @staticmethod
     def test_evaluate_position(c):
