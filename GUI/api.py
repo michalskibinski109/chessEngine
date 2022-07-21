@@ -1,3 +1,7 @@
+
+import sys 
+sys.path.append('') # fixing import problem [temporary solution] 
+
 from flask import Flask, request,render_template, jsonify
 from src.engine import ChessEngine
 
