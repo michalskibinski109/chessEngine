@@ -1,4 +1,4 @@
-from Points import Points
+from src.Points import Points
 
 class PosEvaluator(Points):
     """

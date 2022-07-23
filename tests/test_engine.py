@@ -1,16 +1,23 @@
 import sys 
 sys.path.append('') # fixing import problem [temporary solution] 
 
+
+########have to end this refactoring
+
 from chess import Board
 from src.engine import ChessEngine, PushingInvalidMoveException
+
 import pytest
 
 class TestChessEngine:
     
-    @staticmethod
-    @pytest.fixture(autouse=True)
-    def c():
-        return ChessEngine(1, Board())
+    @pytest.fixture()
+    def setup_engine(self):
+        self.c = ChessEngine(1, Board())
+        yield 
+        del self.c
+
+    
     
     @staticmethod
     def test_init(c):
@@ -73,7 +80,8 @@ class TestChessEngine:
         b_mate_in_1 = Board('8/K1k5/1r6/8/8/8/8/8 w - - 0 1')
         b_mate_in_2 = Board('8/K7/2k5/8/8/1r6/8/8 w - - 0 1')
         w_mate_in_3 = Board('k7/8/8/1RK5/8/8/8/8 w - - 0 1')
-        assert c.engine(w_mate_in_1, 0) == 100
-        assert c.engine(b_mate_in_1, 1) == -100
-        assert c.engine(b_mate_in_2, 3) == -100
-        assert c.engine(w_mate_in_3, 4) == 100
+        
+        assert c.engine_move(w_mate_in_1, 0) == 100
+        assert c.engine_move(b_mate_in_1, 1) == -100
+        assert c.engine_move(b_mate_in_2, 3) == -100
+        assert c.engine_move(w_mate_in_3, 4) == 100

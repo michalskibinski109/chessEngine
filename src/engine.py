@@ -58,11 +58,6 @@ class ChessEngine:
     def depth(self, depth: int) -> int:
         self.__depth = min(max(1, depth), 4)
 
-    def reset(self):
-        self.history = []
-        self.time_on_move = []
-        self.is_pos_in_data = True
-        self.board.reset()
 
     def save_to_file(self) -> None:
         with open('game.json', 'w', encoding="utf-8") as f:

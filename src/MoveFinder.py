@@ -3,6 +3,7 @@ import chess
 from src.Log import Log
 from src.PosEvaluator import PosEvaluator
 import time
+from logging import Logger
 
 
 
@@ -10,7 +11,7 @@ class NoLegalMovesException(Exception):
     pass
 
 class MoveFinder:
-    def __init__(self, depth, board:chess.Board, logger: Log) -> None:
+    def __init__(self, depth, board:chess.Board, logger: Logger) -> None:
         self.logger = logger
         self.board = board
         self.depth = depth
@@ -39,6 +40,7 @@ class MoveFinder:
     def get_best_eval(self, moves, ev):
         ev = dict(zip(moves, ev))
         ev = (sorted(ev.items(), key=lambda item: item[1]))
+        self.logger.info(f'best move: {ev[-self.board.turn][0]}')
         return ev[-self.board.turn]
 
     def engine(self, board: chess.Board(), depth=None):

@@ -1,9 +1,10 @@
-
+#$env:pythonpath += ";c:/Users/miskibin/Desktop/CHESS_ENGINE/"
 import sys 
 sys.path.append('') # fixing import problem [temporary solution] 
 
 from flask import Flask, request,render_template, jsonify
 from src.engine import ChessEngine
+from src.PosEvaluator import PosEvaluator
 
 
 app = Flask(__name__) 
@@ -20,7 +21,7 @@ def index_func():
 def human_move():
     h_move = request.args.get('move', 0, type=str)
     eng.push_move(h_move) 
-    return jsonify(eval = eng.evaluate_pos())
+    return jsonify(eval = PosEvaluator(eng.board)())
 
 @app.route("/AI")
 def ai_func():
