@@ -40,7 +40,6 @@ class MoveFinder:
     def get_best_eval(self, moves, ev):
         ev = dict(zip(moves, ev))
         ev = (sorted(ev.items(), key=lambda item: item[1]))
-        self.logger.info(f'best move: {ev[-self.board.turn][0]}')
         return ev[-self.board.turn]
 
     def engine(self, board: chess.Board(), depth=None):
