@@ -30,7 +30,7 @@ class ChessEngine:
         find_move(): returns best move
         evaluate_pos(): evaluate given position 
 
-    Todo:
+    TODO:
         optimalization
         improve evaluate position func
     """
@@ -43,9 +43,7 @@ class ChessEngine:
         self.history = []
         self.evaluations = []
         self.time_on_move = []
-        self.is_pos_in_data = True
-        if str(self.board.fen()) != 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1':
-            self.is_pos_in_data = False  # false if pos not in openings
+        self.is_pos_in_data = self.board.fen() == 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
         with open('OpeningsDatabase.json', 'r', encoding="utf-8") as f:
             self.openings = json.load(f)
         np.random.shuffle(self.openings)

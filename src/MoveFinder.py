@@ -3,7 +3,7 @@ import chess
 from src.Log import Log
 from src.PosEvaluator import PosEvaluator
 import time
-from logging import Logger
+from logging import Logger, getLogger
 
 
 
@@ -11,7 +11,7 @@ class NoLegalMovesException(Exception):
     pass
 
 class MoveFinder:
-    def __init__(self, depth, board:chess.Board, logger: Logger) -> None:
+    def __init__(self, depth, board:chess.Board, logger: Logger = getLogger('')) -> None:
         self.logger = logger
         self.board = board
         self.depth = depth
