@@ -1,10 +1,7 @@
-import sys
 from chess import Board
-import numpy as np
 from tqdm import tqdm
 from miskibin import get_logger
 from logging import Logger
-import json
 from .points import ADD_POINTS, DEPTH
 import pandas as pd
 from time import time
@@ -30,21 +27,6 @@ class ChessEngine:
             self.logger.warning(f"File {path} not found")
             self.openings = pd.DataFrame(columns=["fen", "move"])
         self.logger.info(f"Initialized engine with depth: {depth}")
-
-    PIECE_VALUES = {
-        "P": 1,
-        "N": 3,
-        "B": 3,
-        "R": 5,
-        "Q": 9,
-        "K": 0,
-        "p": -1,
-        "n": -3,
-        "b": -3,
-        "r": -5,
-        "q": -9,
-        "k": 0,
-    }
 
     def evaluate(self, board: Board) -> float:
         self.inspected_nodes += 1
@@ -79,20 +61,11 @@ class ChessEngine:
             self.logger.debug(f"fen not found in database")
             return None
 
-    def get_best_move(self, board: Board = None) -> tuple:
-        start = time()
-        self.inspected_nodes = 0
-        if not board:
-            board = self.board
+    def __get_engine_move(self, board: Board) -> tuple:
         depth = self.depth + DEPTH.get(len(board.piece_map()), 0)
-        move = self.get_move_from_database()
-        if move:
-            return move, 0
         legal_moves = list(board.legal_moves)
-        self.logger.debug(f"legal moves: {len(legal_moves)} depth: {depth}")
-        # sort moves by capture
         legal_moves.sort(key=lambda move: board.is_capture(move), reverse=True)
-        # bar = tqdm(legal_moves)
+        bar = tqdm(legal_moves)
         evals = []
         alpha, beta = -100, 100
         for move in legal_moves:
@@ -101,27 +74,33 @@ class ChessEngine:
                 self.__alpha_beta_puring(
                     board,
                     depth - 1,
-                    alpha=alpha,
-                    beta=beta,
+                    alpha,
+                    beta,
                 )
             )
             board.pop()
-            # bar.update(1)
+            bar.update(1)
             if board.turn:
                 alpha = max(alpha, evals[-1])
             else:
                 beta = min(beta, evals[-1])
-            output = f"\r move: {move} evaluation: {evals[-1]:.2f}"
-            sys.stdout.write(output)
-            sys.stdout.flush()
+        index = evals.index(max(evals)) if board.turn else evals.index(min(evals))
+        return board.san(legal_moves[index]), evals[index]
+
+    def get_best_move(self, board: Board = None) -> tuple:
+        start = time()
+        self.inspected_nodes = 0
+        if not board:
+            board = self.board
+        move = self.get_move_from_database()
+        if move:
+            return move, 0
+        move, evaluation = self.__get_engine_move(board)
         self.logger.debug(
             f"\ninspected  {self.inspected_nodes} nodes time: {time()-start:.1f}s"
         )
-        index = evals.index(max(evals)) if board.turn else evals.index(min(evals))
-        self.logger.info(
-            f"best move: {legal_moves[index]}, evaluation: {evals[index]:.2f}"
-        )
-        return board.san(legal_moves[index]), evals[index]
+        self.logger.info(f"best move: {move}, evaluation: {evaluation:.2f}")
+        return move, evaluation
 
     def __alpha_beta_puring(
         self, board: Board, depth: int, alpha: float, beta: float
