@@ -1,11 +1,14 @@
-import chess
+import sys
 from chess import Board
 import numpy as np
 from tqdm import tqdm
 from miskibin import get_logger
 from logging import Logger
-from numba import njit
 import json
+from .points import ADD_POINTS, DEPTH
+import pandas as pd
+from time import time
+from pathlib import Path
 
 
 class ChessEngine:
@@ -18,16 +21,15 @@ class ChessEngine:
         self.logger = logger
         self.board = board
         self.depth = depth
-        self.history = []
-        self.is_pos_in_data = True
-        self.openings = []
-        try:
-            with open("WCC.json", "r", encoding="utf-8") as f:
-                self.openings = json.load(f)
-        except FileNotFoundError:
-            self.logger.warning("WCC.json not found")
-            self.is_pos_in_data = False
-        np.random.shuffle(self.openings)
+        self.inspected_nodes = 0
+        path = Path(__file__).parent / "openings.csv"
+        if path.exists():
+            self.openings = pd.read_csv(path.resolve())
+            self.logger.debug(f"openings loaded {self.openings.shape}")
+        else:
+            self.logger.warning(f"File {path} not found")
+            self.openings = pd.DataFrame(columns=["fen", "move"])
+        self.logger.info(f"Initialized engine with depth: {depth}")
 
     PIECE_VALUES = {
         "P": 1,
@@ -45,43 +47,52 @@ class ChessEngine:
     }
 
     def evaluate(self, board: Board) -> float:
-        if board.is_checkmate():
-            return -100 if board.turn else 100
+        self.inspected_nodes += 1
+        if board.is_game_over():
+            if board.is_checkmate():
+                return -100 if board.turn else 100
+            return 0
         return sum(
-            [self.PIECE_VALUES[str(piece)] for piece in board.piece_map().values()]
+            ADD_POINTS[str(piece)][square]
+            for square, piece in board.piece_map().items()
         )
 
     def push_from_san(self, move: str) -> None:
         try:
-            self.logger.info(f"pushing move: {move}")
-            self.history.append(str(self.board.san(self.board.parse_san(move))))
+            self.logger.debug(f"pushing move: {move}")
             self.board.push_san(move)
         except ValueError as err:
             self.logger.warning(f"{str(self.board)}\n")
             self.logger.exception(f"Invalid move {move}")
             raise err
+        if self.board.is_game_over():
+            self.logger.info(f"Game over: {self.board.result()}")
 
     def get_move_from_database(self):
-        if self.is_pos_in_data:
-            if len(self.history) < 1:
-                return self.openings[np.random.choice(len(self.openings))][0]
-            for op in self.openings:
-                if op[: len(self.history)] == self.history:
-                    return op[len(self.history)]  # next move from opening
-            self.is_pos_in_data = False
-        return -1
+        fen = self.board.fen().split(" ")[:4]
+        fen = " ".join(fen)
+        try:
+            return (
+                self.openings[self.openings["fen"] == fen].sample(1)["move"].values[0]
+            )
+        except (IndexError, ValueError):
+            self.logger.debug(f"fen not found in database")
+            return None
 
     def get_best_move(self, board: Board = None) -> tuple:
+        start = time()
+        self.inspected_nodes = 0
         if not board:
             board = self.board
-        if self.is_pos_in_data:
-            move = self.get_move_from_database()
-            if move != -1:
-                return move, 0
+        depth = self.depth + DEPTH.get(len(board.piece_map()), 0)
+        move = self.get_move_from_database()
+        if move:
+            return move, 0
         legal_moves = list(board.legal_moves)
+        self.logger.debug(f"legal moves: {len(legal_moves)} depth: {depth}")
         # sort moves by capture
         legal_moves.sort(key=lambda move: board.is_capture(move), reverse=True)
-        bar = tqdm(legal_moves)
+        # bar = tqdm(legal_moves)
         evals = []
         alpha, beta = -100, 100
         for move in legal_moves:
@@ -89,19 +100,27 @@ class ChessEngine:
             evals.append(
                 self.__alpha_beta_puring(
                     board,
-                    self.depth - 1,
+                    depth - 1,
                     alpha=alpha,
                     beta=beta,
                 )
             )
             board.pop()
-            bar.update(1)
+            # bar.update(1)
             if board.turn:
                 alpha = max(alpha, evals[-1])
             else:
                 beta = min(beta, evals[-1])
-
+            output = f"\r move: {move} evaluation: {evals[-1]:.2f}"
+            sys.stdout.write(output)
+            sys.stdout.flush()
+        self.logger.debug(
+            f"\ninspected  {self.inspected_nodes} nodes time: {time()-start:.1f}s"
+        )
         index = evals.index(max(evals)) if board.turn else evals.index(min(evals))
+        self.logger.info(
+            f"best move: {legal_moves[index]}, evaluation: {evals[index]:.2f}"
+        )
         return board.san(legal_moves[index]), evals[index]
 
     def __alpha_beta_puring(

@@ -50,6 +50,8 @@ function sendMove() {
       dataType: "json",
       success: function (data) {
         console.log("from server: ", data);
+        var evaluation = data.evaluation;
+        document.getElementById("eval").innerHTML = evaluation.toFixed(1);
       },
       failure: function (errMsg) {
         alert(errMsg);
@@ -60,6 +62,11 @@ function sendMove() {
 
 // get computer move from server
 function getServerMove() {
+  console.log("onMoveEnd");
+  if (game.game_over()) {
+    alert("Game over");
+    return;
+  }
   $.ajax({
     type: "GET",
     url: "/AI",
@@ -182,9 +189,13 @@ function showTime() {
     times[game.history().length % 2] -= 1;
 
     document.getElementById("timeO").innerHTML =
-      Math.floor(times[1] / 60) + ":" + (times[1] % 60 ? times[1] % 60 : "00");
+      Math.floor(times[1] / 60).toString() +
+      ":" +
+      (times[1] % 60 ? times[1] % 60 : "00");
     document.getElementById("timeX").innerHTML =
-      Math.floor(times[0] / 60) + ":" + (times[0] % 60 ? times[0] % 60 : "00");
+      Math.floor(times[0] / 60).toString() +
+      ":" +
+      (times[0] % 60 ? times[0] % 60 : "00");
   }
 }
 
