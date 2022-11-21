@@ -4,6 +4,9 @@ Engine is written in python and uses the minimax algorithm with alpha-beta pruni
 engine can not compete with the best engines in the world, it's elo is around 1600. Python is not the best language for chess engines. It's slow and not optimized. 
 
 
+## machine learning module.
+I am currently working on model that will evaluate position on [machineLearning branch](https://github.com/michalskibinski109/chessEngine/tree/machineLearning)
+
 ## Usage
 run `api.py` to start server with interactive chess board.
 change depth of engine to set its strength.
